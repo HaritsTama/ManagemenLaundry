@@ -20,8 +20,6 @@ namespace ManagemenLaundry
             InitializeComponent();
         }
 
-        // =================== PEGAWAI CRUD ===================
-
         private void AddPelanggan(string id, string nama, string noTelp, string email)
         {
             using (SqlConnection conn = new SqlConnection(connectionString))
