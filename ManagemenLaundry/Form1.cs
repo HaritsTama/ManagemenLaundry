@@ -13,80 +13,40 @@ namespace ManagemenLaundry
 {
     public partial class Form1 : Form
     {
-        string connectionString = "Data Source=localhost;Initial Catalog=SistemManajemenLaundry;Integrated Security=True";
+        private string connectionString = "Data Source= LAPTOP-RFI0KF85\\HARITSZHAFRAN ;Initial Catalog=SistemManajemenLaundry;Integrated Security=True";
 
         public Form1()
         {
             InitializeComponent();
         }
-
-        private void AddPelanggan(string id, string nama, string noTelp, string email)
+        private void BtnPelangBaru_Click(object sender, EventArgs e)
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
-            {
-                string query = "INSERT INTO Pelanggan VALUES (@ID, @Nama, @NoTelp, @Email)";
-                SqlCommand cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@ID", id);
-                cmd.Parameters.AddWithValue("@Nama", nama);
-                cmd.Parameters.AddWithValue("@NoTelp", noTelp);
-                cmd.Parameters.AddWithValue("@Email", email);
-
-                conn.Open();
-                cmd.ExecuteNonQuery();
-                conn.Close();
-
-                MessageBox.Show("Pelanggan berhasil ditambahkan.");
-            }
+            TambahPelangganForm tambahPelangganForm = new TambahPelangganForm();
+            tambahPelangganForm.ShowDialog();
         }
 
-        private void UpdatePelanggan(string id, string nama, string noTelp, string email)
+        private void BtnBuatPesan_Click(object sender, EventArgs e)
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
-            {
-                string query = "UPDATE Pelanggan SET Nama=@Nama, NoTelp=@NoTelp, Email=@Email WHERE ID_Pelanggan=@ID";
-                SqlCommand cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@ID", id);
-                cmd.Parameters.AddWithValue("@Nama", nama);
-                cmd.Parameters.AddWithValue("@NoTelp", noTelp);
-                cmd.Parameters.AddWithValue("@Email", email);
-
-                conn.Open();
-                cmd.ExecuteNonQuery();
-                conn.Close();
-
-                MessageBox.Show("Pelanggan berhasil diperbarui.");
-            }
+            MasukanPesananForm masukanPesananForm = new MasukanPesananForm();
+            masukanPesananForm.ShowDialog();
         }
 
-        private void DeletePelanggan(string id)
+        private void BtnPembayaran_Click(object sender, EventArgs e)
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
-            {
-                string query = "DELETE FROM Pelanggan WHERE ID_Pelanggan=@ID";
-                SqlCommand cmd = new SqlCommand(query, conn);
-                cmd.Parameters.AddWithValue("@ID", id);
-
-                conn.Open();
-                cmd.ExecuteNonQuery();
-                conn.Close();
-
-                MessageBox.Show("Pelanggan berhasil dihapus.");
-            }
+            PembayaranForm pembayaranForm = new PembayaranForm();
+            pembayaranForm.ShowDialog();
         }
 
-        private DataTable GetPelanggan()
+        private void btnTambah_Click(object sender, EventArgs e)
         {
-            DataTable dt = new DataTable();
-            using (SqlConnection conn = new SqlConnection(connectionString))
-            {
-                string query = "SELECT * FROM Pelanggan";
-                SqlDataAdapter da = new SqlDataAdapter(query, conn);
-                da.Fill(dt);
-            }
-            return dt;
+            TambahLayananForm tambahLayananForm = new TambahLayananForm();
+            tambahLayananForm.ShowDialog();
         }
 
-        // TODO: Tambahkan method CRUD untuk Pesanan, Layanan, Barang, dan Pembayaran
-        // dengan struktur serupa (Add, Update, Delete, Get)
+        private void btnBarang_Click(object sender, EventArgs e)
+        {
+            TambahBarangForm tambahBarangForm = new TambahBarangForm();
+            tambahBarangForm.ShowDialog();
+        }
     }
 }
