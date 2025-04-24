@@ -29,9 +29,16 @@ namespace ManagemenLaundry
                 try
                 {
                     conn.Open();
-                    string query = "SELECT p.ID_Pembayaran, ps.ID_Pesanan, ps.Metode_Pembayaran, ps.Status_Pembayaran, ps.Billing_Dibuat, ps.Batas_Lunas " +
-                                   "FROM Pembayaran p " +
-                                   "INNER JOIN Pesanan ps ON p.ID_Pesanan = ps.ID_Pesanan";
+                    string query = @"
+                        SELECT 
+                            pe.ID_Pembayaran, 
+                            p.ID_Pesanan,    
+                            pe.Metode_Pembayaran,
+                            pe.Status_Pembayaran, 
+                            pe.Billing_Dibuat, Batas_Lunas 
+                        FROM Pembayaran pe
+                        INNER JOIN Pesanan p ON pe.ID_Pesanan = p.ID_Pesanan
+                    ";
                     using (SqlDataAdapter da = new SqlDataAdapter(query, conn))
                     {
                         DataTable dt = new DataTable();
@@ -203,9 +210,16 @@ namespace ManagemenLaundry
                 try
                 {
                     conn.Open();
-                    string query = "SELECT p.ID_Pembayaran, ps.ID_Pesanan, ps.Metode_Pembayaran, ps.Status_Pembayaran, ps.Billing_Dibuat, ps.Batas_Lunas " +
-                                   "FROM Pembayaran p " +
-                                   "INNER JOIN Pesanan ps ON p.ID_Pesanan = ps.ID_Pesanan";
+                    string query = @"
+                        SELECT 
+                            pe.ID_Pembayaran, 
+                            p.ID_Pesanan,    
+                            pe.Metode_Pembayaran,
+                            pe.Status_Pembayaran, 
+                            pe.Billing_Dibuat, Batas_Lunas 
+                        FROM Pembayaran pe
+                        INNER JOIN Pesanan p ON pe.ID_Pesanan = p.ID_Pesanan
+                    ";
                     using (SqlDataAdapter da = new SqlDataAdapter(query, conn))
                     {
                         DataTable dt = new DataTable();
