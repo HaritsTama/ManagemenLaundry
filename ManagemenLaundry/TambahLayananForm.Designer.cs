@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.txtIDLY = new System.Windows.Forms.TextBox();
+            this.txtPLY = new System.Windows.Forms.TextBox();
             this.IDLY = new System.Windows.Forms.Label();
             this.txtHLY = new System.Windows.Forms.TextBox();
             this.txtNLY = new System.Windows.Forms.TextBox();
@@ -42,22 +42,22 @@
             ((System.ComponentModel.ISupportInitialize)(this.dgvLayanan)).BeginInit();
             this.SuspendLayout();
             // 
-            // txtIDLY
+            // txtPLY
             // 
-            this.txtIDLY.Location = new System.Drawing.Point(199, 48);
-            this.txtIDLY.Name = "txtIDLY";
-            this.txtIDLY.Size = new System.Drawing.Size(249, 22);
-            this.txtIDLY.TabIndex = 6;
+            this.txtPLY.Location = new System.Drawing.Point(199, 117);
+            this.txtPLY.Name = "txtPLY";
+            this.txtPLY.Size = new System.Drawing.Size(249, 22);
+            this.txtPLY.TabIndex = 6;
             // 
             // IDLY
             // 
             this.IDLY.AutoSize = true;
             this.IDLY.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.IDLY.Location = new System.Drawing.Point(30, 48);
+            this.IDLY.Location = new System.Drawing.Point(30, 117);
             this.IDLY.Name = "IDLY";
-            this.IDLY.Size = new System.Drawing.Size(100, 20);
+            this.IDLY.Size = new System.Drawing.Size(161, 20);
             this.IDLY.TabIndex = 5;
-            this.IDLY.Text = "ID (LY###)";
+            this.IDLY.Text = "Waktu Pengerjaan";
             // 
             // txtHLY
             // 
@@ -68,7 +68,7 @@
             // 
             // txtNLY
             // 
-            this.txtNLY.Location = new System.Drawing.Point(199, 118);
+            this.txtNLY.Location = new System.Drawing.Point(199, 48);
             this.txtNLY.Name = "txtNLY";
             this.txtNLY.Size = new System.Drawing.Size(249, 22);
             this.txtNLY.TabIndex = 9;
@@ -87,7 +87,7 @@
             // 
             this.NamaLY.AutoSize = true;
             this.NamaLY.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.NamaLY.Location = new System.Drawing.Point(30, 118);
+            this.NamaLY.Location = new System.Drawing.Point(30, 48);
             this.NamaLY.Name = "NamaLY";
             this.NamaLY.Size = new System.Drawing.Size(57, 20);
             this.NamaLY.TabIndex = 7;
@@ -158,7 +158,7 @@
             this.Controls.Add(this.txtNLY);
             this.Controls.Add(this.HargaLY);
             this.Controls.Add(this.NamaLY);
-            this.Controls.Add(this.txtIDLY);
+            this.Controls.Add(this.txtPLY);
             this.Controls.Add(this.IDLY);
             this.Name = "TambahLayananForm";
             this.Text = "TambahLayananForm";
@@ -170,7 +170,7 @@
 
         #endregion
 
-        private System.Windows.Forms.TextBox txtIDLY;
+        private System.Windows.Forms.TextBox txtPLY;
         private System.Windows.Forms.Label IDLY;
         private System.Windows.Forms.TextBox txtHLY;
         private System.Windows.Forms.TextBox txtNLY;

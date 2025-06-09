@@ -37,8 +37,6 @@
             this.txtNBR = new System.Windows.Forms.TextBox();
             this.HargaBR = new System.Windows.Forms.Label();
             this.NamaBR = new System.Windows.Forms.Label();
-            this.txtIDBR = new System.Windows.Forms.TextBox();
-            this.IDBR = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.dgvBarang)).BeginInit();
             this.SuspendLayout();
             // 
@@ -95,14 +93,14 @@
             // 
             // txtHBR
             // 
-            this.txtHBR.Location = new System.Drawing.Point(223, 176);
+            this.txtHBR.Location = new System.Drawing.Point(223, 152);
             this.txtHBR.Name = "txtHBR";
             this.txtHBR.Size = new System.Drawing.Size(249, 22);
             this.txtHBR.TabIndex = 22;
             // 
             // txtNBR
             // 
-            this.txtNBR.Location = new System.Drawing.Point(223, 109);
+            this.txtNBR.Location = new System.Drawing.Point(223, 56);
             this.txtNBR.Name = "txtNBR";
             this.txtNBR.Size = new System.Drawing.Size(249, 22);
             this.txtNBR.TabIndex = 21;
@@ -111,7 +109,7 @@
             // 
             this.HargaBR.AutoSize = true;
             this.HargaBR.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.HargaBR.Location = new System.Drawing.Point(54, 176);
+            this.HargaBR.Location = new System.Drawing.Point(54, 152);
             this.HargaBR.Name = "HargaBR";
             this.HargaBR.Size = new System.Drawing.Size(60, 20);
             this.HargaBR.TabIndex = 20;
@@ -121,28 +119,11 @@
             // 
             this.NamaBR.AutoSize = true;
             this.NamaBR.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.NamaBR.Location = new System.Drawing.Point(54, 109);
+            this.NamaBR.Location = new System.Drawing.Point(54, 56);
             this.NamaBR.Name = "NamaBR";
             this.NamaBR.Size = new System.Drawing.Size(57, 20);
             this.NamaBR.TabIndex = 19;
             this.NamaBR.Text = "Nama";
-            // 
-            // txtIDBR
-            // 
-            this.txtIDBR.Location = new System.Drawing.Point(223, 39);
-            this.txtIDBR.Name = "txtIDBR";
-            this.txtIDBR.Size = new System.Drawing.Size(249, 22);
-            this.txtIDBR.TabIndex = 18;
-            // 
-            // IDBR
-            // 
-            this.IDBR.AutoSize = true;
-            this.IDBR.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.IDBR.Location = new System.Drawing.Point(54, 39);
-            this.IDBR.Name = "IDBR";
-            this.IDBR.Size = new System.Drawing.Size(104, 20);
-            this.IDBR.TabIndex = 17;
-            this.IDBR.Text = "ID (BR###)";
             // 
             // TambahBarangForm
             // 
@@ -158,8 +139,6 @@
             this.Controls.Add(this.txtNBR);
             this.Controls.Add(this.HargaBR);
             this.Controls.Add(this.NamaBR);
-            this.Controls.Add(this.txtIDBR);
-            this.Controls.Add(this.IDBR);
             this.Name = "TambahBarangForm";
             this.Text = "TambahBarangForm";
             ((System.ComponentModel.ISupportInitialize)(this.dgvBarang)).EndInit();
@@ -179,7 +158,5 @@
         private System.Windows.Forms.TextBox txtNBR;
         private System.Windows.Forms.Label HargaBR;
         private System.Windows.Forms.Label NamaBR;
-        private System.Windows.Forms.TextBox txtIDBR;
-        private System.Windows.Forms.Label IDBR;
     }
 }

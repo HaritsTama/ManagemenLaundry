@@ -27,11 +27,11 @@ namespace ManagemenLaundry
 
         private void ClearForm()
         {
-            txtIDLY.Clear();
             txtNLY.Clear();
+            txtPLY.Clear();
             txtHLY.Clear();
 
-            txtIDLY.Focus();
+            txtNLY.Focus();
         }
 
         private void LoadData()
@@ -41,7 +41,7 @@ namespace ManagemenLaundry
                 try
                 {
                     conn.Open();
-                    string query = "SELECT ID_Layanan AS [ID_Layanan], Nama_Layanan, L_Harga FROM Layanan";
+                    string query = "SELECT ID_Layanan, Nama_Layanan, Panjang_Hari, L_Harga FROM Layanan";
                     SqlDataAdapter da = new SqlDataAdapter(query, conn);
                     DataTable dt = new DataTable();
                     da.Fill(dt);
@@ -60,30 +60,33 @@ namespace ManagemenLaundry
 
         private void btnTambahL_Click(object sender, EventArgs e)
         {
+
+            DialogResult result = MessageBox.Show("Apakah anda ingin menambahkan data baru?", "Konfirmasi", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (result == DialogResult.No) return;
+
+            if (txtNLY.Text == "" || txtPLY.Text == "" || txtHLY.Text == "")
+            {
+                MessageBox.Show("Harap isi semua data!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 try
                 {
-                    if (txtIDLY.Text == "" || txtNLY.Text == "" || txtHLY.Text == "")
-                    {
-                        MessageBox.Show("Harap isi semua data!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return;
-                    }
-
                     conn.Open();
-                    string query = "INSERT INTO Layanan (ID_Layanan, Nama_Layanan, L_Harga) VALUES (@ID_Layanan, @Nama_Layanan, @L_Harga)";
+                    string query = "INSERT INTO Layanan (Nama_Layanan, Panjang_Hari, L_Harga) VALUES (@Nama_Layanan, @Panjang_Hari, @L_Harga)";
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
-                        cmd.Parameters.AddWithValue("@ID_Layanan", txtIDLY.Text.Trim());
                         cmd.Parameters.AddWithValue("@Nama_Layanan", txtNLY.Text.Trim());
-                        cmd.Parameters.AddWithValue("@L_Harga", txtHLY.Text.Trim());
+                        cmd.Parameters.AddWithValue("@Panjang_Hari", int.Parse(txtPLY.Text.Trim()));
+                        cmd.Parameters.AddWithValue("@L_Harga", decimal.Parse(txtHLY.Text.Trim()));
 
                         int rowsAffected = cmd.ExecuteNonQuery();
                         if (rowsAffected > 0)
                         {
                             MessageBox.Show("Data berhasil ditambahkan!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
                             LoadData();
-                            ClearForm();
                         }
                         else
                         {
@@ -100,75 +103,78 @@ namespace ManagemenLaundry
 
         private void btnHapusL_Click(object sender, EventArgs e)
         {
-            if (dgvLayanan.SelectedRows.Count > 0)
-            {
-                DialogResult confirm = MessageBox.Show("Yakin ingin menghapus data ini?", "Konfirmasi", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                if (confirm == DialogResult.Yes)
-                {
-                    using (SqlConnection conn = new SqlConnection(connectionString))
-                    {
-                        try
-                        {
-                            string ID_Layanan = dgvLayanan.SelectedRows[0].Cells["ID_Layanan"].Value.ToString();
-                            conn.Open();
-                            string query = "DELETE FROM Layanan WHERE ID_Layanan = @ID_Layanan";
 
-                            using (SqlCommand cmd = new SqlCommand(query, conn))
-                            {
-                                cmd.Parameters.AddWithValue("@ID_Layanan", ID_Layanan);
-                                int rowsAffected = cmd.ExecuteNonQuery();
-
-                                if (rowsAffected > 0)
-                                {
-                                    MessageBox.Show("Data berhasil dihapus!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                                    LoadData();
-                                    ClearForm();
-                                }
-                                else
-                                {
-                                    MessageBox.Show("Data tidak ditemukan atau gagal dihapus!", "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                                }
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            MessageBox.Show("Error: " + ex.Message, "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        }
-                    }
-                }
-            }
-            else
+            if (dgvLayanan.SelectedRows.Count == 0)
             {
                 MessageBox.Show("Pilih data yang akan dihapus!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }
-        }
-
-        private void btnUbahL_Click(object sender, EventArgs e)
-        {
-            if (txtIDLY.Text == "")
-            {
-                MessageBox.Show("Pilih data yang ingin diperbarui!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
+
+            DialogResult result = MessageBox.Show("Apakah anda ingin menghapus data yang dipilih?", "Konfirmasi", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (result == DialogResult.No) return;
+
+            string idLayanan = dgvLayanan.SelectedRows[0].Cells["ID_Layanan"].Value.ToString();
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 try
                 {
                     conn.Open();
-                    string query = "UPDATE Layanan SET Nama = @Nama_Layanan, L_Harga = @L_Harga WHERE ID_Layanan = @ID_Layanan";
+                    string query = "DELETE FROM Layanan WHERE ID_Layanan = @ID_Layanan";
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
-                        cmd.Parameters.AddWithValue("@ID_Layanan", txtIDLY.Text.Trim());
+                        cmd.Parameters.AddWithValue("@ID_Layanan", idLayanan);
+                        int rowsAffected = cmd.ExecuteNonQuery();
+
+                        if (rowsAffected > 0)
+                        {
+                            MessageBox.Show("Data berhasil dihapus!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            LoadData();
+                        }
+                        else
+                        {
+                            MessageBox.Show("Data tidak ditemukan atau gagal dihapus!", "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error: " + ex.Message, "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private void btnUbahL_Click(object sender, EventArgs e)
+        {
+            if (dgvLayanan.SelectedRows.Count == 0)
+            {
+                MessageBox.Show("Pilih data yang ingin diperbarui!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            DialogResult result = MessageBox.Show("Apakah anda ingin mengubah data yang dipilih?", "Konfirmasi", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (result == DialogResult.No) return;
+
+            string idLayanan = dgvLayanan.SelectedRows[0].Cells["ID_Layanan"].Value.ToString();
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                try
+                {
+                    conn.Open();
+                    string query = "UPDATE Layanan SET Nama_Layanan = @Nama_Layanan, Panjang_Hari = @Panjang_Hari, L_Harga = @L_Harga WHERE ID_Layanan = @ID_Layanan";
+                    using (SqlCommand cmd = new SqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@ID_Layanan", idLayanan);
                         cmd.Parameters.AddWithValue("@Nama_Layanan", txtNLY.Text.Trim());
-                        cmd.Parameters.AddWithValue("@L_Harga", txtHLY.Text.Trim());
+                        cmd.Parameters.AddWithValue("@Panjang_Hari", int.Parse(txtPLY.Text.Trim()));
+                        cmd.Parameters.AddWithValue("@L_Harga", decimal.Parse(txtHLY.Text.Trim()));
 
                         int rowsAffected = cmd.ExecuteNonQuery();
                         if (rowsAffected > 0)
                         {
                             MessageBox.Show("Data berhasil diperbarui!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
                             LoadData();
-                            ClearForm();
                         }
                         else
                         {
@@ -185,6 +191,17 @@ namespace ManagemenLaundry
 
         private void btnRefreshL_Click(object sender, EventArgs e)
         {
+            DialogResult result = MessageBox.Show(
+                "Apakah anda ingin merefresh data?",
+                "Konfirmasi",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+            if (result == DialogResult.No)
+            {
+                return;
+            }
+
             LoadData();
             MessageBox.Show($"Jumlah Kolom: {dgvLayanan.ColumnCount}\nJumlah Baris: {dgvLayanan.RowCount}",
                 "Debugging DataGridView", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -196,10 +213,12 @@ namespace ManagemenLaundry
             {
                 DataGridViewRow row = dgvLayanan.Rows[e.RowIndex];
 
-                txtIDLY.Text = row.Cells[0].Value.ToString();
-                txtNLY.Text = row.Cells[1].Value.ToString();
-                txtHLY.Text = row.Cells[2].Value?.ToString();
+                // Kolom: ID_Layanan | Nama_Layanan | Panjang_Hari | L_Harga
+                txtNLY.Text = row.Cells["Nama_Layanan"].Value?.ToString();
+                txtPLY.Text = row.Cells["Panjang_Hari"].Value?.ToString();
+                txtHLY.Text = row.Cells["L_Harga"].Value?.ToString();
             }
         }
     }
+
 }

@@ -77,6 +77,17 @@ namespace ManagemenLaundry
 
         private void btnTambahP_Click(object sender, EventArgs e)
         {
+            DialogResult result = MessageBox.Show(
+                "Apakah anda ingin menambahkan data baru?",
+                "Konfirmasi",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+            if (result == DialogResult.No)
+            {
+                return;
+            }
+
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 try
@@ -97,7 +108,7 @@ namespace ManagemenLaundry
 
                     conn.Open();
 
-                    // Ambil harga layanan
+
                     string hargaQuery = "SELECT L_Harga FROM Layanan WHERE ID_Layanan = @ID_Layanan";
                     SqlCommand hargaCmd = new SqlCommand(hargaQuery, conn);
                     hargaCmd.Parameters.AddWithValue("@ID_Layanan", idLayanan);
@@ -141,12 +152,22 @@ namespace ManagemenLaundry
 
         private void btnHapusP_Click(object sender, EventArgs e)
         {
+           
+
             if (dgvPesanan.SelectedRows.Count > 0)
             {
-                DialogResult result = MessageBox.Show("Yakin ingin menghapus pesanan ini?", "Konfirmasi", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                if (result == DialogResult.Yes)
+                DialogResult result = MessageBox.Show(
+               "Apakah anda ingin menghapus data yang dipilih?",
+               "Konfirmasi",
+               MessageBoxButtons.YesNo,
+               MessageBoxIcon.Question);
+
+                if (result == DialogResult.No)
                 {
-                    using (SqlConnection conn = new SqlConnection(connectionString))
+                    return;
+                }
+
+                using (SqlConnection conn = new SqlConnection(connectionString))
                     {
                         try
                         {
@@ -175,7 +196,7 @@ namespace ManagemenLaundry
                             MessageBox.Show("Error: " + ex.Message, "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         }
                     }
-                }
+                
             }
             else
             {

@@ -14,6 +14,7 @@ namespace ManagemenLaundry
     public partial class TambahPelangganForm: Form
     {
         private string connectionString = "Data Source= LAPTOP-RFI0KF85\\HARITSZHAFRAN ;Initial Catalog=SistemManajemenLaundry;Integrated Security=True";
+        private int selectedID = -1;
 
         public TambahPelangganForm()
         {
@@ -27,12 +28,25 @@ namespace ManagemenLaundry
 
         private void ClearForm()
         {
-            txtIDPG.Clear();
             txtNPG.Clear();
             txtTPG.Clear();
             txtEPG.Clear();
+            selectedID = -1;
 
-            txtIDPG.Focus();
+            txtNPG.Focus();
+        }
+
+        private bool ValidateForm()
+        {
+            if (string.IsNullOrWhiteSpace(txtNPG.Text) ||
+                string.IsNullOrWhiteSpace(txtTPG.Text) ||
+                string.IsNullOrWhiteSpace(txtEPG.Text))
+            {
+                MessageBox.Show("Harap isi semua data!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
+            return true;
         }
 
         private void LoadData()
@@ -42,155 +56,155 @@ namespace ManagemenLaundry
                 try
                 {
                     conn.Open();
-                    string query = "SELECT ID_Pelanggan AS [ID_Pelanggan], Nama, NoTelp, Email FROM Pelanggan";
-                    SqlDataAdapter da = new SqlDataAdapter(query, conn);
+                    string query = "SELECT ID_Pelanggan, Nama, NoTelp, Email FROM Pelanggan";
+                    SqlDataAdapter adapter = new SqlDataAdapter(query, conn);
                     DataTable dt = new DataTable();
-                    da.Fill(dt);
+                    adapter.Fill(dt);
 
-                    dgvPelanggan.AutoGenerateColumns = true;
                     dgvPelanggan.DataSource = dt;
-
                     ClearForm();
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Error : " + ex.Message, "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Error saat load data: " + ex.Message, "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
 
         private void btnTambah_Click(object sender, EventArgs e)
         {
+            if (!ValidateForm()) return;
+
+            DialogResult result = MessageBox.Show("Apakah Anda yakin ingin menambahkan data baru?", "Konfirmasi", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (result == DialogResult.No) return;
+
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 try
                 {
-                    if (txtIDPG.Text == "" || txtNPG.Text == "" || txtTPG.Text == "" || txtEPG.Text == "")
-                    {
-                        MessageBox.Show("Harap isi semua data!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        return;
-                    }
-
                     conn.Open();
-                    string query = "INSERT INTO Pelanggan (ID_Pelanggan, Nama, NoTelp, Email) VALUES (@ID_Pelanggan, @Nama, @NoTelp, @Email)";
+                    string query = "INSERT INTO Pelanggan (Nama, NoTelp, Email) VALUES (@Nama, @NoTelp, @Email)";
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
-                        cmd.Parameters.AddWithValue("@ID_Pelanggan", txtIDPG.Text.Trim());
                         cmd.Parameters.AddWithValue("@Nama", txtNPG.Text.Trim());
                         cmd.Parameters.AddWithValue("@NoTelp", txtTPG.Text.Trim());
                         cmd.Parameters.AddWithValue("@Email", txtEPG.Text.Trim());
 
                         int rowsAffected = cmd.ExecuteNonQuery();
+                        MessageBox.Show(rowsAffected > 0 ? "Data berhasil ditambahkan!" : "Data gagal ditambahkan!", 
+                            rowsAffected > 0 ? "Sukses" : "Kesalahan", 
+                            MessageBoxButtons.OK, 
+                            rowsAffected > 0 ? MessageBoxIcon.Information : MessageBoxIcon.Error);
+
                         if (rowsAffected > 0)
                         {
-                            MessageBox.Show("Data berhasil ditambahkan!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
                             LoadData();
-                            ClearForm();
-                        }
-                        else
-                        {
-                            MessageBox.Show("Data tidak berhasil ditambahkan!", "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Error: " + ex.Message, "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Error saat tambah data: " + ex.Message, "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
 
         private void btnHapus_Click(object sender, EventArgs e)
         {
-            if (dgvPelanggan.SelectedRows.Count > 0)
+            if (selectedID == -1)
             {
-                DialogResult confirm = MessageBox.Show("Yakin ingin menghapus data ini?", "Konfirmasi", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                if (confirm == DialogResult.Yes)
-                {
-                    using (SqlConnection conn = new SqlConnection(connectionString))
-                    {
-                        try
-                        {
-                            string ID_Pelanggan = dgvPelanggan.SelectedRows[0].Cells["ID_Pelanggan"].Value.ToString();
-                            conn.Open();
-                            string query = "DELETE FROM Pelanggan WHERE ID_Pelanggan = @ID_Pelanggan";
-
-                            using (SqlCommand cmd = new SqlCommand(query, conn))
-                            {
-                                cmd.Parameters.AddWithValue("@ID_Pelanggan", ID_Pelanggan);
-                                int rowsAffected = cmd.ExecuteNonQuery();
-
-                                if (rowsAffected > 0)
-                                {
-                                    MessageBox.Show("Data berhasil dihapus!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                                    LoadData();
-                                    ClearForm();
-                                }
-                                else
-                                {
-                                    MessageBox.Show("Data tidak ditemukan atau gagal dihapus!", "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                                }
-                            }
-                        }
-                        catch (Exception ex)
-                        {
-                            MessageBox.Show("Error: " + ex.Message, "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        }
-                    }
-                }
-            }
-            else
-            {
-                MessageBox.Show("Pilih data yang akan dihapus!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-            }
-        }
-
-        private void btnUbah_Click(object sender, EventArgs e)
-        {
-            if (txtIDPG.Text == "")
-            {
-                MessageBox.Show("Pilih data yang ingin diperbarui!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Silakan pilih data yang ingin dihapus.", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
+
+            DialogResult result = MessageBox.Show("Apakah Anda yakin ingin menghapus data ini?", "Konfirmasi", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+            if (result == DialogResult.No) return;
 
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 try
                 {
                     conn.Open();
-                    string query = "UPDATE Pelanggan SET Nama = @Nama, NoTelp = @NoTelp, Email = @Email WHERE ID_Pelanggan = @ID_Pelanggan";
+                    string query = "DELETE FROM Pelanggan WHERE ID_Pelanggan = @ID";
                     using (SqlCommand cmd = new SqlCommand(query, conn))
                     {
-                        cmd.Parameters.AddWithValue("@ID_Pelanggan", txtIDPG.Text.Trim());
-                        cmd.Parameters.AddWithValue("@Nama", txtNPG.Text.Trim());
-                        cmd.Parameters.AddWithValue("@NoTelp", txtTPG.Text.Trim());
-                        cmd.Parameters.AddWithValue("@Email", txtEPG.Text.Trim());
+                        cmd.Parameters.AddWithValue("@ID", selectedID);
 
                         int rowsAffected = cmd.ExecuteNonQuery();
+                        MessageBox.Show(rowsAffected > 0 ? "Data berhasil dihapus!" : "Data gagal dihapus!",
+                            rowsAffected > 0 ? "Sukses" : "Kesalahan",
+                            MessageBoxButtons.OK,
+                            rowsAffected > 0 ? MessageBoxIcon.Information : MessageBoxIcon.Error);
+
                         if (rowsAffected > 0)
-                        {
-                            MessageBox.Show("Data berhasil diperbarui!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
                             LoadData();
-                            ClearForm();
-                        }
-                        else
-                        {
-                            MessageBox.Show("Data tidak ditemukan atau gagal diperbarui!", "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        }
                     }
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Error: " + ex.Message, "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Error saat hapus data: " + ex.Message, "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private void btnUbah_Click(object sender, EventArgs e)
+        {
+            if (selectedID == -1 || !ValidateForm())
+            {
+                MessageBox.Show("Silakan pilih data yang ingin diubah.", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            DialogResult result = MessageBox.Show("Apakah Anda yakin ingin mengubah data ini?", "Konfirmasi", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (result == DialogResult.No) return;
+
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                try
+                {
+                    conn.Open();
+                    string query = "UPDATE Pelanggan SET Nama = @Nama, NoTelp = @NoTelp, Email = @Email WHERE ID_Pelanggan = @ID";
+                    using (SqlCommand cmd = new SqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@Nama", txtNPG.Text.Trim());
+                        cmd.Parameters.AddWithValue("@NoTelp", txtTPG.Text.Trim());
+                        cmd.Parameters.AddWithValue("@Email", txtEPG.Text.Trim());
+                        cmd.Parameters.AddWithValue("@ID", selectedID);
+
+                        int rowsAffected = cmd.ExecuteNonQuery();
+                        MessageBox.Show(rowsAffected > 0 ? "Data berhasil diperbarui!" : "Data gagal diperbarui!",
+                            rowsAffected > 0 ? "Sukses" : "Kesalahan",
+                            MessageBoxButtons.OK,
+                            rowsAffected > 0 ? MessageBoxIcon.Information : MessageBoxIcon.Error);
+
+                        if (rowsAffected > 0)
+                            LoadData();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error saat update data: " + ex.Message, "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
 
         private void btnRefresh_Click(object sender, EventArgs e)
         {
+
+            DialogResult result = MessageBox.Show(
+                "Apakah anda ingin merefresh data?",
+                "Konfirmasi",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+            if (result == DialogResult.No)
+            {
+                return;
+            }
+
             LoadData();
             MessageBox.Show($"Jumlah Kolom: {dgvPelanggan.ColumnCount}\nJumlah Baris: {dgvPelanggan.RowCount}",
-                "Debugging DataGridView", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                "Info Data", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
         private void dgvPelanggan_CellContentClick(object sender, DataGridViewCellEventArgs e)
@@ -198,11 +212,10 @@ namespace ManagemenLaundry
             if (e.RowIndex >= 0)
             {
                 DataGridViewRow row = dgvPelanggan.Rows[e.RowIndex];
-
-                txtIDPG.Text = row.Cells[0].Value.ToString();
-                txtNPG.Text = row.Cells[1].Value.ToString();
-                txtTPG.Text = row.Cells[2].Value?.ToString();
-                txtEPG.Text = row.Cells[3].Value?.ToString();
+                selectedID = Convert.ToInt32(row.Cells["ID_Pelanggan"].Value);
+                txtNPG.Text = row.Cells["Nama"].Value?.ToString();
+                txtTPG.Text = row.Cells["NoTelp"].Value?.ToString();
+                txtEPG.Text = row.Cells["Email"].Value?.ToString();
             }
         }
     }

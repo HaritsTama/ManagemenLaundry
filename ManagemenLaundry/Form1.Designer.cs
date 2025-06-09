@@ -60,7 +60,7 @@
             // BtnBuatPesan
             // 
             this.BtnBuatPesan.Font = new System.Drawing.Font("Garamond", 10.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.BtnBuatPesan.Location = new System.Drawing.Point(235, 140);
+            this.BtnBuatPesan.Location = new System.Drawing.Point(235, 276);
             this.BtnBuatPesan.Name = "BtnBuatPesan";
             this.BtnBuatPesan.Size = new System.Drawing.Size(317, 48);
             this.BtnBuatPesan.TabIndex = 2;
@@ -71,7 +71,7 @@
             // BtnPembayaran
             // 
             this.BtnPembayaran.Font = new System.Drawing.Font("Garamond", 10.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.BtnPembayaran.Location = new System.Drawing.Point(235, 210);
+            this.BtnPembayaran.Location = new System.Drawing.Point(235, 348);
             this.BtnPembayaran.Name = "BtnPembayaran";
             this.BtnPembayaran.Size = new System.Drawing.Size(317, 48);
             this.BtnPembayaran.TabIndex = 3;
@@ -82,7 +82,7 @@
             // btnTambah
             // 
             this.btnTambah.Font = new System.Drawing.Font("Garamond", 10.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnTambah.Location = new System.Drawing.Point(235, 279);
+            this.btnTambah.Location = new System.Drawing.Point(235, 139);
             this.btnTambah.Name = "btnTambah";
             this.btnTambah.Size = new System.Drawing.Size(317, 48);
             this.btnTambah.TabIndex = 4;
@@ -93,7 +93,7 @@
             // btnBarang
             // 
             this.btnBarang.Font = new System.Drawing.Font("Garamond", 10.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnBarang.Location = new System.Drawing.Point(235, 350);
+            this.btnBarang.Location = new System.Drawing.Point(235, 206);
             this.btnBarang.Name = "btnBarang";
             this.btnBarang.Size = new System.Drawing.Size(317, 48);
             this.btnBarang.TabIndex = 5;

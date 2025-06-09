@@ -28,11 +28,9 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.IDPG = new System.Windows.Forms.Label();
             this.NamaPG = new System.Windows.Forms.Label();
             this.TeleponPG = new System.Windows.Forms.Label();
             this.EmailPG = new System.Windows.Forms.Label();
-            this.txtIDPG = new System.Windows.Forms.TextBox();
             this.txtNPG = new System.Windows.Forms.TextBox();
             this.txtEPG = new System.Windows.Forms.TextBox();
             this.txtTPG = new System.Windows.Forms.TextBox();
@@ -44,21 +42,11 @@
             ((System.ComponentModel.ISupportInitialize)(this.dgvPelanggan)).BeginInit();
             this.SuspendLayout();
             // 
-            // IDPG
-            // 
-            this.IDPG.AutoSize = true;
-            this.IDPG.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.IDPG.Location = new System.Drawing.Point(42, 36);
-            this.IDPG.Name = "IDPG";
-            this.IDPG.Size = new System.Drawing.Size(104, 20);
-            this.IDPG.TabIndex = 0;
-            this.IDPG.Text = "ID (PG###)";
-            // 
             // NamaPG
             // 
             this.NamaPG.AutoSize = true;
             this.NamaPG.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.NamaPG.Location = new System.Drawing.Point(42, 81);
+            this.NamaPG.Location = new System.Drawing.Point(42, 34);
             this.NamaPG.Name = "NamaPG";
             this.NamaPG.Size = new System.Drawing.Size(57, 20);
             this.NamaPG.TabIndex = 1;
@@ -78,29 +66,22 @@
             // 
             this.EmailPG.AutoSize = true;
             this.EmailPG.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.EmailPG.Location = new System.Drawing.Point(42, 126);
+            this.EmailPG.Location = new System.Drawing.Point(42, 104);
             this.EmailPG.Name = "EmailPG";
             this.EmailPG.Size = new System.Drawing.Size(56, 20);
             this.EmailPG.TabIndex = 3;
             this.EmailPG.Text = "Email";
             // 
-            // txtIDPG
-            // 
-            this.txtIDPG.Location = new System.Drawing.Point(211, 36);
-            this.txtIDPG.Name = "txtIDPG";
-            this.txtIDPG.Size = new System.Drawing.Size(249, 22);
-            this.txtIDPG.TabIndex = 4;
-            // 
             // txtNPG
             // 
-            this.txtNPG.Location = new System.Drawing.Point(211, 81);
+            this.txtNPG.Location = new System.Drawing.Point(211, 34);
             this.txtNPG.Name = "txtNPG";
             this.txtNPG.Size = new System.Drawing.Size(249, 22);
             this.txtNPG.TabIndex = 5;
             // 
             // txtEPG
             // 
-            this.txtEPG.Location = new System.Drawing.Point(211, 126);
+            this.txtEPG.Location = new System.Drawing.Point(211, 104);
             this.txtEPG.Name = "txtEPG";
             this.txtEPG.Size = new System.Drawing.Size(249, 22);
             this.txtEPG.TabIndex = 6;
@@ -176,11 +157,9 @@
             this.Controls.Add(this.txtTPG);
             this.Controls.Add(this.txtEPG);
             this.Controls.Add(this.txtNPG);
-            this.Controls.Add(this.txtIDPG);
             this.Controls.Add(this.EmailPG);
             this.Controls.Add(this.TeleponPG);
             this.Controls.Add(this.NamaPG);
-            this.Controls.Add(this.IDPG);
             this.Name = "TambahPelangganForm";
             this.Text = "TambahPelangganForm";
             ((System.ComponentModel.ISupportInitialize)(this.dgvPelanggan)).EndInit();
@@ -190,12 +169,9 @@
         }
 
         #endregion
-
-        private System.Windows.Forms.Label IDPG;
         private System.Windows.Forms.Label NamaPG;
         private System.Windows.Forms.Label TeleponPG;
         private System.Windows.Forms.Label EmailPG;
-        private System.Windows.Forms.TextBox txtIDPG;
         private System.Windows.Forms.TextBox txtNPG;
         private System.Windows.Forms.TextBox txtEPG;
         private System.Windows.Forms.TextBox txtTPG;
