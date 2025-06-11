@@ -5,6 +5,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.Caching;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -15,6 +16,13 @@ namespace ManagemenLaundry
     {
         private string connectionString = "Data Source= LAPTOP-RFI0KF85\\HARITSZHAFRAN ;Initial Catalog=SistemManajemenLaundry;Integrated Security=True";
         private int selectedID = -1;
+
+        private readonly MemoryCache _cache = MemoryCache.Default;
+        private readonly string _cacheKey = "PelangganData";
+        private readonly CacheItemPolicy _cachePolicy = new CacheItemPolicy
+        {
+            AbsoluteExpiration = DateTimeOffset.Now.AddMinutes(5)
+        };
 
         public TambahPelangganForm()
         {
@@ -49,142 +57,193 @@ namespace ManagemenLaundry
             return true;
         }
 
-        private void LoadData()
-        {
-            using (SqlConnection conn = new SqlConnection(connectionString))
-            {
-                try
-                {
-                    conn.Open();
-                    string query = "SELECT ID_Pelanggan, Nama, NoTelp, Email FROM Pelanggan";
-                    SqlDataAdapter adapter = new SqlDataAdapter(query, conn);
-                    DataTable dt = new DataTable();
-                    adapter.Fill(dt);
 
-                    dgvPelanggan.DataSource = dt;
-                    ClearForm();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Error saat load data: " + ex.Message, "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            }
-        }
 
         private void btnTambah_Click(object sender, EventArgs e)
         {
-            if (!ValidateForm()) return;
+            string nama = txtNPG.Text;
+            string email = txtEPG.Text;
+            string telepon = txtTPG.Text;
 
-            DialogResult result = MessageBox.Show("Apakah Anda yakin ingin menambahkan data baru?", "Konfirmasi", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            if (result == DialogResult.No) return;
-
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            // Validasi input
+            if (string.IsNullOrWhiteSpace(nama) || string.IsNullOrWhiteSpace(email) ||
+                string.IsNullOrWhiteSpace(email))
             {
-                try
+                MessageBox.Show("Harap isi semua data!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Validasi tanggal masuk
+            if (!System.Text.RegularExpressions.Regex.IsMatch(txtNPG.Text, @"^[a-zA-Z\s]+$"))
+            {
+                MessageBox.Show("Nama pelanggan tidak boleh mengandung karakter spesial atau angka.", "Validasi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            ;
+
+
+            // Konfirmasi sebelum simpan
+            var konfirmasi = MessageBox.Show(
+                $"Apakah Anda yakin ingin menyimpan data berikut?\n\n" +
+                $"Nama: {nama}\n" +
+                $"Enail: {email}\n" +
+                $"Telepon: {telepon}\n" +
+                MessageBoxButtons.YesNo
+            );
+
+            if (konfirmasi == DialogResult.No)
+            {
+                return;
+            }
+
+            try
+            {
+                using (SqlConnection con = new SqlConnection(connectionString))
                 {
-                    conn.Open();
-                    string query = "INSERT INTO Pelanggan (Nama, NoTelp, Email) VALUES (@Nama, @NoTelp, @Email)";
-                    using (SqlCommand cmd = new SqlCommand(query, conn))
+                    con.Open();
+                    SqlTransaction transaction = con.BeginTransaction();
+                    try
                     {
-                        cmd.Parameters.AddWithValue("@Nama", txtNPG.Text.Trim());
-                        cmd.Parameters.AddWithValue("@NoTelp", txtTPG.Text.Trim());
-                        cmd.Parameters.AddWithValue("@Email", txtEPG.Text.Trim());
+                        SqlCommand cmd = new SqlCommand("usp_Pelanggan_Insert", con, transaction);
+                        cmd.CommandType = CommandType.StoredProcedure;
 
-                        int rowsAffected = cmd.ExecuteNonQuery();
-                        MessageBox.Show(rowsAffected > 0 ? "Data berhasil ditambahkan!" : "Data gagal ditambahkan!", 
-                            rowsAffected > 0 ? "Sukses" : "Kesalahan", 
-                            MessageBoxButtons.OK, 
-                            rowsAffected > 0 ? MessageBoxIcon.Information : MessageBoxIcon.Error);
+                        cmd.Parameters.AddWithValue("@Nama", nama);
+                        cmd.Parameters.AddWithValue("@Email", email);
+                        cmd.Parameters.AddWithValue("@NoTelp", telepon);
 
-                        if (rowsAffected > 0)
+
+                        int result = cmd.ExecuteNonQuery();
+                        transaction.Commit();
+
+
+                        if (result > 0)
                         {
+                            _cache.Remove(_cacheKey);
+                            MessageBox.Show("Data berhasil ditambahkan.", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            ClearForm();
                             LoadData();
                         }
+                        else
+                        {
+                            MessageBox.Show("Data gagal ditambahkan.", "Gagal", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        }
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        MessageBox.Show("Terjadi kesalahan saat menyimpan data. Silakan coba lagi.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Error saat tambah data: " + ex.Message, "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
         }
 
         private void btnHapus_Click(object sender, EventArgs e)
         {
-            if (selectedID == -1)
+            if (dgvPelanggan.CurrentRow != null)
             {
-                MessageBox.Show("Silakan pilih data yang ingin dihapus.", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
+                int id = Convert.ToInt32(dgvPelanggan.CurrentRow.Cells["ID_Pelanggan"].Value);
 
-            DialogResult result = MessageBox.Show("Apakah Anda yakin ingin menghapus data ini?", "Konfirmasi", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
-            if (result == DialogResult.No) return;
+                var confirm = MessageBox.Show("Apakah Anda yakin ingin menghapus data ini?", "Konfirmasi Hapus", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                if (confirm != DialogResult.Yes) return;
 
-            using (SqlConnection conn = new SqlConnection(connectionString))
-            {
-                try
+                using (SqlConnection con = new SqlConnection(connectionString))
                 {
-                    conn.Open();
-                    string query = "DELETE FROM Pelanggan WHERE ID_Pelanggan = @ID";
-                    using (SqlCommand cmd = new SqlCommand(query, conn))
+                    con.Open();
+                    SqlTransaction transaction = con.BeginTransaction();
+                    try
                     {
-                        cmd.Parameters.AddWithValue("@ID", selectedID);
+                        SqlCommand cmd = new SqlCommand("usp_Pelanggan_Delete", con, transaction);
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.AddWithValue("@ID_Pelanggan", id);
+                        int result = cmd.ExecuteNonQuery();
+                        transaction.Commit();
+                        if (result > 0)
+                        {
+                            _cache.Remove(_cacheKey);
 
-                        int rowsAffected = cmd.ExecuteNonQuery();
-                        MessageBox.Show(rowsAffected > 0 ? "Data berhasil dihapus!" : "Data gagal dihapus!",
-                            rowsAffected > 0 ? "Sukses" : "Kesalahan",
-                            MessageBoxButtons.OK,
-                            rowsAffected > 0 ? MessageBoxIcon.Information : MessageBoxIcon.Error);
-
-                        if (rowsAffected > 0)
+                            MessageBox.Show("Data berhasil dihapus.", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            ClearForm();
                             LoadData();
+                        }
+                        else
+                        {
+                            MessageBox.Show("Hapus gagal.", "Gagal", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        }
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        MessageBox.Show("Terjadi kesalahan saat menghapus data. Silakan coba lagi.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Error saat hapus data: " + ex.Message, "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+
+            }
+            else
+            {
+                MessageBox.Show("Silakan pilih baris data yang ingin dihapus terlebih dahulu.", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
+        private void TambahPelangganForm_Load_1(object sender, EventArgs e)
+        {
+
+        }
+
+
         private void btnUbah_Click(object sender, EventArgs e)
         {
-            if (selectedID == -1 || !ValidateForm())
+            if (dgvPelanggan.CurrentRow != null)
             {
-                MessageBox.Show("Silakan pilih data yang ingin diubah.", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
+                int id = Convert.ToInt32(dgvPelanggan.CurrentRow.Cells["ID_Pelanggan"].Value);
+                string nama = txtNPG.Text;
+                string email = txtEPG.Text;
+                string telepon = txtTPG.Text;
 
-            DialogResult result = MessageBox.Show("Apakah Anda yakin ingin mengubah data ini?", "Konfirmasi", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            if (result == DialogResult.No) return;
+                var confirm = MessageBox.Show("Apakah Anda yakin ingin mengupdate data ini?", "Konfirmasi", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                if (confirm != DialogResult.Yes) return;
 
-            using (SqlConnection conn = new SqlConnection(connectionString))
-            {
-                try
+                using (SqlConnection con = new SqlConnection(connectionString))
                 {
-                    conn.Open();
-                    string query = "UPDATE Pelanggan SET Nama = @Nama, NoTelp = @NoTelp, Email = @Email WHERE ID_Pelanggan = @ID";
-                    using (SqlCommand cmd = new SqlCommand(query, conn))
+                    con.Open();
+                    SqlTransaction transaction = con.BeginTransaction();
+                    try
                     {
-                        cmd.Parameters.AddWithValue("@Nama", txtNPG.Text.Trim());
-                        cmd.Parameters.AddWithValue("@NoTelp", txtTPG.Text.Trim());
-                        cmd.Parameters.AddWithValue("@Email", txtEPG.Text.Trim());
-                        cmd.Parameters.AddWithValue("@ID", selectedID);
+                        SqlCommand cmd = new SqlCommand("usp_Pelanggan_Update", con, transaction);
+                        cmd.CommandType = CommandType.StoredProcedure;
 
-                        int rowsAffected = cmd.ExecuteNonQuery();
-                        MessageBox.Show(rowsAffected > 0 ? "Data berhasil diperbarui!" : "Data gagal diperbarui!",
-                            rowsAffected > 0 ? "Sukses" : "Kesalahan",
-                            MessageBoxButtons.OK,
-                            rowsAffected > 0 ? MessageBoxIcon.Information : MessageBoxIcon.Error);
+                        cmd.Parameters.AddWithValue("@ID_Pelanggan", id);
+                        cmd.Parameters.AddWithValue("@Nama", nama);
+                        cmd.Parameters.AddWithValue("@Email", email);
+                        cmd.Parameters.AddWithValue("@NoTelp", telepon);
 
-                        if (rowsAffected > 0)
+
+                        int result = cmd.ExecuteNonQuery();
+                        transaction.Commit();
+
+                        if (result > 0)
+                        {
+                            _cache.Remove(_cacheKey);
+                            MessageBox.Show("Data berhasil diperbarui.", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            ClearForm();
                             LoadData();
+                        }
+                        else
+                        {
+                            MessageBox.Show("Update gagal.", "Gagal", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        }
+                    }
+                    catch
+                    {
+                        transaction.Rollback();
+                        MessageBox.Show("Terjadi kesalahan saat menyimpan data. Silakan coba lagi.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Error saat update data: " + ex.Message, "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+
             }
         }
 
@@ -216,6 +275,41 @@ namespace ManagemenLaundry
                 txtNPG.Text = row.Cells["Nama"].Value?.ToString();
                 txtTPG.Text = row.Cells["NoTelp"].Value?.ToString();
                 txtEPG.Text = row.Cells["Email"].Value?.ToString();
+            }
+        }
+
+        private void LoadData()
+        {
+            try
+            {
+                DataTable cachedData = _cache.Get(_cacheKey) as DataTable;
+
+                if (cachedData != null)
+                {
+                    dgvPelanggan.DataSource = cachedData;
+                    return;
+                }
+
+                using (SqlConnection con = new SqlConnection(connectionString))
+                {
+                    using (SqlCommand cmd = new SqlCommand("usp_Pelanggan_GetAll", con))
+                    {
+                        cmd.CommandType = CommandType.StoredProcedure;
+
+                        SqlDataAdapter da = new SqlDataAdapter(cmd);
+                        DataTable dt = new DataTable();
+                        da.Fill(dt);
+
+                        // Simpan ke cache
+                        _cache.Set(_cacheKey, dt, _cachePolicy);
+
+                        dgvPelanggan.DataSource = dt;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Gagal memuat data: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }

@@ -5,6 +5,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.Caching;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -14,6 +15,13 @@ namespace ManagemenLaundry
     public partial class TambahLayananForm : Form
     {
         private string connectionString = "Data Source= LAPTOP-RFI0KF85\\HARITSZHAFRAN ;Initial Catalog=SistemManajemenLaundry;Integrated Security=True";
+
+        private readonly MemoryCache _cache = MemoryCache.Default;
+        private readonly string _cacheKey = "LayananData";
+        private readonly CacheItemPolicy _cachePolicy = new CacheItemPolicy
+        {
+            AbsoluteExpiration = DateTimeOffset.Now.AddMinutes(5)
+        };
 
         public TambahLayananForm()
         {
@@ -33,159 +41,232 @@ namespace ManagemenLaundry
 
             txtNLY.Focus();
         }
+        private bool ValidateForm()
+        {
+            if (string.IsNullOrWhiteSpace(txtNLY.Text) ||
+                string.IsNullOrWhiteSpace(txtPLY.Text) ||
+                string.IsNullOrWhiteSpace(txtHLY.Text))
+            {
+                MessageBox.Show("Harap isi semua data!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
+            return true;
+        }
 
         private void LoadData()
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            try
             {
-                try
-                {
-                    conn.Open();
-                    string query = "SELECT ID_Layanan, Nama_Layanan, Panjang_Hari, L_Harga FROM Layanan";
-                    SqlDataAdapter da = new SqlDataAdapter(query, conn);
-                    DataTable dt = new DataTable();
-                    da.Fill(dt);
+                DataTable cachedData = _cache.Get(_cacheKey) as DataTable;
 
-                    dgvLayanan.AutoGenerateColumns = true;
-                    dgvLayanan.DataSource = dt;
-
-                    ClearForm();
-                }
-                catch (Exception ex)
+                if (cachedData != null)
                 {
-                    MessageBox.Show("Error : " + ex.Message, "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    dgvLayanan.DataSource = cachedData;
+                    return;
                 }
+
+                using (SqlConnection con = new SqlConnection(connectionString))
+                {
+                    using (SqlCommand cmd = new SqlCommand("usp_Layanan_GetAll", con))
+                    {
+                        cmd.CommandType = CommandType.StoredProcedure;
+
+                        SqlDataAdapter da = new SqlDataAdapter(cmd);
+                        DataTable dt = new DataTable();
+                        da.Fill(dt);
+
+                        // Simpan ke cache
+                        _cache.Set(_cacheKey, dt, _cachePolicy);
+
+                        dgvLayanan.DataSource = dt;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Gagal memuat data: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
         private void btnTambahL_Click(object sender, EventArgs e)
         {
+            string nama = txtNLY.Text;
+            string waktuPengerjaan = txtPLY.Text;
+            string Harga = txtHLY.Text;
 
-            DialogResult result = MessageBox.Show("Apakah anda ingin menambahkan data baru?", "Konfirmasi", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            if (result == DialogResult.No) return;
-
-            if (txtNLY.Text == "" || txtPLY.Text == "" || txtHLY.Text == "")
+            // Validasi input
+            if (string.IsNullOrWhiteSpace(nama) || string.IsNullOrWhiteSpace(waktuPengerjaan) ||
+                string.IsNullOrWhiteSpace(Harga))
             {
                 MessageBox.Show("Harap isi semua data!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            // Validasi tanggal masuk
+            if (!System.Text.RegularExpressions.Regex.IsMatch(txtNLY.Text, @"^[a-zA-Z\s]+$"))
             {
-                try
-                {
-                    conn.Open();
-                    string query = "INSERT INTO Layanan (Nama_Layanan, Panjang_Hari, L_Harga) VALUES (@Nama_Layanan, @Panjang_Hari, @L_Harga)";
-                    using (SqlCommand cmd = new SqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@Nama_Layanan", txtNLY.Text.Trim());
-                        cmd.Parameters.AddWithValue("@Panjang_Hari", int.Parse(txtPLY.Text.Trim()));
-                        cmd.Parameters.AddWithValue("@L_Harga", decimal.Parse(txtHLY.Text.Trim()));
+                MessageBox.Show("Nama pelanggan tidak boleh mengandung karakter spesial atau angka.", "Validasi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+            ;
 
-                        int rowsAffected = cmd.ExecuteNonQuery();
-                        if (rowsAffected > 0)
+
+            // Konfirmasi sebelum simpan
+            var konfirmasi = MessageBox.Show(
+                $"Apakah Anda yakin ingin menyimpan data berikut?\n\n" +
+                $"Nama_Layanan: {nama}\n" +
+                $"Panjang_Hari: {waktuPengerjaan}\n" +
+                $"L_Harga: {Harga}\n" +
+                MessageBoxButtons.YesNo
+            );
+
+            if (konfirmasi == DialogResult.No)
+            {
+                return;
+            }
+
+            try
+            {
+                using (SqlConnection con = new SqlConnection(connectionString))
+                {
+                    con.Open();
+                    SqlTransaction transaction = con.BeginTransaction();
+                    try
+                    {
+                        SqlCommand cmd = new SqlCommand("usp_Layanan_Insert", con, transaction);
+                        cmd.CommandType = CommandType.StoredProcedure;
+
+                        cmd.Parameters.AddWithValue("@Nama_Layanan", nama);
+                        cmd.Parameters.AddWithValue("@Panjang_Hari", waktuPengerjaan);
+                        cmd.Parameters.AddWithValue("@L_Harga", Harga);
+
+
+                        int result = cmd.ExecuteNonQuery();
+                        transaction.Commit();
+
+
+                        if (result > 0)
                         {
-                            MessageBox.Show("Data berhasil ditambahkan!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            _cache.Remove(_cacheKey);
+                            MessageBox.Show("Data berhasil ditambahkan.", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            ClearForm();
                             LoadData();
                         }
                         else
                         {
-                            MessageBox.Show("Data tidak berhasil ditambahkan!", "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            MessageBox.Show("Data gagal ditambahkan.", "Gagal", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         }
                     }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Error: " + ex.Message, "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    catch
+                    {
+                        transaction.Rollback();
+                        MessageBox.Show("Terjadi kesalahan saat menyimpan data. Silakan coba lagi.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
                 }
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
         }
 
         private void btnHapusL_Click(object sender, EventArgs e)
         {
-
-            if (dgvLayanan.SelectedRows.Count == 0)
+            if (dgvLayanan.CurrentRow != null)
             {
-                MessageBox.Show("Pilih data yang akan dihapus!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
+                int id = Convert.ToInt32(dgvLayanan.CurrentRow.Cells["ID_Layanan"].Value);
 
-            DialogResult result = MessageBox.Show("Apakah anda ingin menghapus data yang dipilih?", "Konfirmasi", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            if (result == DialogResult.No) return;
+                var confirm = MessageBox.Show("Apakah Anda yakin ingin menghapus data ini?", "Konfirmasi Hapus", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                if (confirm != DialogResult.Yes) return;
 
-            string idLayanan = dgvLayanan.SelectedRows[0].Cells["ID_Layanan"].Value.ToString();
-
-            using (SqlConnection conn = new SqlConnection(connectionString))
-            {
-                try
+                using (SqlConnection con = new SqlConnection(connectionString))
                 {
-                    conn.Open();
-                    string query = "DELETE FROM Layanan WHERE ID_Layanan = @ID_Layanan";
-                    using (SqlCommand cmd = new SqlCommand(query, conn))
+                    con.Open();
+                    SqlTransaction transaction = con.BeginTransaction();
+                    try
                     {
-                        cmd.Parameters.AddWithValue("@ID_Layanan", idLayanan);
-                        int rowsAffected = cmd.ExecuteNonQuery();
-
-                        if (rowsAffected > 0)
+                        SqlCommand cmd = new SqlCommand("usp_Layanan_Delete", con, transaction);
+                        cmd.CommandType = CommandType.StoredProcedure;
+                        cmd.Parameters.AddWithValue("@ID_Layanan", id);
+                        int result = cmd.ExecuteNonQuery();
+                        transaction.Commit();
+                        if (result > 0)
                         {
-                            MessageBox.Show("Data berhasil dihapus!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            _cache.Remove(_cacheKey);
+                            MessageBox.Show("Data berhasil dihapus.", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            ClearForm();
                             LoadData();
                         }
                         else
                         {
-                            MessageBox.Show("Data tidak ditemukan atau gagal dihapus!", "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            MessageBox.Show("Hapus gagal.", "Gagal", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         }
                     }
+                    catch
+                    {
+                        transaction.Rollback();
+                        MessageBox.Show("Terjadi kesalahan saat menghapus data. Silakan coba lagi.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Error: " + ex.Message, "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+
+            }
+            else
+            {
+                MessageBox.Show("Silakan pilih baris data yang ingin dihapus terlebih dahulu.", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
         private void btnUbahL_Click(object sender, EventArgs e)
         {
-            if (dgvLayanan.SelectedRows.Count == 0)
+            if (dgvLayanan.CurrentRow != null)
             {
-                MessageBox.Show("Pilih data yang ingin diperbarui!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
+                int id = Convert.ToInt32(dgvLayanan.CurrentRow.Cells["ID_Layanan"].Value);
+                string nama = txtNLY.Text;
+                string waktuPengerjaan = txtPLY.Text;
+                string Harga = txtHLY.Text;
 
-            DialogResult result = MessageBox.Show("Apakah anda ingin mengubah data yang dipilih?", "Konfirmasi", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-            if (result == DialogResult.No) return;
+                var confirm = MessageBox.Show("Apakah Anda yakin ingin mengupdate data ini?", "Konfirmasi", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                if (confirm != DialogResult.Yes) return;
 
-            string idLayanan = dgvLayanan.SelectedRows[0].Cells["ID_Layanan"].Value.ToString();
-
-            using (SqlConnection conn = new SqlConnection(connectionString))
-            {
-                try
+                using (SqlConnection con = new SqlConnection(connectionString))
                 {
-                    conn.Open();
-                    string query = "UPDATE Layanan SET Nama_Layanan = @Nama_Layanan, Panjang_Hari = @Panjang_Hari, L_Harga = @L_Harga WHERE ID_Layanan = @ID_Layanan";
-                    using (SqlCommand cmd = new SqlCommand(query, conn))
+                    con.Open();
+                    SqlTransaction transaction = con.BeginTransaction();
+                    try
                     {
-                        cmd.Parameters.AddWithValue("@ID_Layanan", idLayanan);
-                        cmd.Parameters.AddWithValue("@Nama_Layanan", txtNLY.Text.Trim());
-                        cmd.Parameters.AddWithValue("@Panjang_Hari", int.Parse(txtPLY.Text.Trim()));
-                        cmd.Parameters.AddWithValue("@L_Harga", decimal.Parse(txtHLY.Text.Trim()));
+                        SqlCommand cmd = new SqlCommand("usp_Layanan_Update", con, transaction);
+                        cmd.CommandType = CommandType.StoredProcedure;
 
-                        int rowsAffected = cmd.ExecuteNonQuery();
-                        if (rowsAffected > 0)
+                        cmd.Parameters.AddWithValue("@ID_Layanan", id);
+                        cmd.Parameters.AddWithValue("@Nama_Layanan", nama);
+                        cmd.Parameters.AddWithValue("@Panjang_Hari", waktuPengerjaan);
+                        cmd.Parameters.AddWithValue("@L_Harga", Harga);
+
+
+                        int result = cmd.ExecuteNonQuery();
+                        transaction.Commit();
+
+                        if (result > 0)
                         {
-                            MessageBox.Show("Data berhasil diperbarui!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            _cache.Remove(_cacheKey);
+                            MessageBox.Show("Data berhasil diperbarui.", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            ClearForm();
                             LoadData();
                         }
                         else
                         {
-                            MessageBox.Show("Data tidak ditemukan atau gagal diperbarui!", "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            MessageBox.Show("Update gagal.", "Gagal", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         }
                     }
+                    catch
+                    {
+                        transaction.Rollback();
+                        MessageBox.Show("Terjadi kesalahan saat menyimpan data. Silakan coba lagi.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Error: " + ex.Message, "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
+
             }
         }
 

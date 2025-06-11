@@ -48,5 +48,11 @@ namespace ManagemenLaundry
             TambahBarangForm tambahBarangForm = new TambahBarangForm();
             tambahBarangForm.ShowDialog();
         }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            FormLaporanPembelian formLaporanPembelian = new FormLaporanPembelian();
+            formLaporanPembelian.ShowDialog();
+        }
     }
 }

@@ -141,6 +141,7 @@
             this.Controls.Add(this.NamaBR);
             this.Name = "TambahBarangForm";
             this.Text = "TambahBarangForm";
+            this.Load += new System.EventHandler(this.TambahBarangForm_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dgvBarang)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();

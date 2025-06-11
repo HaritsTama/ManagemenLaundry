@@ -162,6 +162,7 @@
             this.Controls.Add(this.NamaPG);
             this.Name = "TambahPelangganForm";
             this.Text = "TambahPelangganForm";
+            this.Load += new System.EventHandler(this.TambahPelangganForm_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dgvPelanggan)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();

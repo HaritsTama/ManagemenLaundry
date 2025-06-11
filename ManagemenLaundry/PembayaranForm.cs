@@ -6,6 +6,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.Caching;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -17,6 +18,14 @@ namespace ManagemenLaundry
         private string connectionString = "Data Source= LAPTOP-RFI0KF85\\HARITSZHAFRAN ;Initial Catalog=SistemManajemenLaundry;Integrated Security=True";
         private int selectedPesananId = -1;
 
+        private readonly MemoryCache _cache = MemoryCache.Default;
+        private readonly CacheItemPolicy _policy = new CacheItemPolicy
+        {
+            AbsoluteExpiration = DateTimeOffset.Now.AddMinutes(5) // cache expires after 5 minutes
+        };
+        private const string PesananCacheKey = "PesananData";
+
+
 
         public PembayaranForm()
         {
@@ -25,24 +34,31 @@ namespace ManagemenLaundry
 
         private void PembayaranForm_Load(object sender, EventArgs e)
         {
+            EnsureIndexes();
             LoadComboBoxPesanan();
             LoadData();
-            plhMtd.Items.AddRange(new string[] { "Transfer", "Tunai", "Qris" });
-            plhSts.Items.AddRange(new string[] { "Belum Bayar", "Lunas" });
         }
 
         private void LoadComboBoxPesanan()
         {
-            cmbPsn.Items.Clear();
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 conn.Open();
-                SqlCommand cmd = new SqlCommand("SELECT ID_Pesanan FROM Pesanan", conn);
-                SqlDataReader reader = cmd.ExecuteReader();
-                while (reader.Read())
+
+                DataTable PesananData = _cache.Get(PesananCacheKey) as DataTable;
+                if (PesananData == null)
                 {
-                    cmbPsn.Items.Add(reader["ID_Pesanan"].ToString());
+                    PesananData = new DataTable();
+                    {
+                        new SqlDataAdapter("SELECT ID_Pesanan FROM Pesanan", conn).Fill(PesananData);
+                    }
+                    _cache.Set(PesananCacheKey, PesananData, _policy);
                 }
+
+                cmbPsn.DataSource = PesananData;
+                cmbPsn.DisplayMember = "ID_Pesanan";
+                cmbPsn.ValueMember = "ID_Pesanan";
+
             }
         }
 
@@ -58,11 +74,21 @@ namespace ManagemenLaundry
         {
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
-                string query = @"SELECT ID_Pesanan, Total_Harga, Billing_Dibuat, Batas_Lunas FROM Pembayaran";
-                SqlDataAdapter da = new SqlDataAdapter(query, conn);
-                DataTable dt = new DataTable();
+                string query = @"
+                    SELECT 
+                        ID_Pesanan,
+                        Total_Harga,
+                        Metode_Pembayaran,
+                        Status_Pembayaran,
+                        Billing_Dibuat,
+                        Batas_Lunas
+                    FROM Pembayaran";
+                var da = new SqlDataAdapter(query, conn);
+                var dt = new DataTable();
                 da.Fill(dt);
+                dgvPembayaran.AutoGenerateColumns = true;
                 dgvPembayaran.DataSource = dt;
+                ClearForm();
             }
         }
 
@@ -130,33 +156,42 @@ namespace ManagemenLaundry
                 return;
             }
 
-            int idPesanan = int.Parse(cmbPsn.SelectedItem.ToString());
+            DialogResult result = MessageBox.Show("Apakah anda ingin menambahkan data ini?", "Konfirmasi", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (result == DialogResult.No) return;
+
+            int idPesanan = Convert.ToInt32(cmbPsn.SelectedValue);
             decimal totalHarga = HitungTotalHarga(idPesanan);
             DateTime batasLunas = HitungBatasLunas(idPesanan);
 
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (var conn = new SqlConnection(connectionString))
             {
                 conn.Open();
-                string query = @"INSERT INTO Pembayaran (ID_Pesanan, Total_Harga, Metode_Pembayaran, Status_Pembayaran, Batas_Lunas)
-                                 VALUES (@ID_Pesanan, @Total_Harga, @Metode_Pembayaran, @Status_Pembayaran, @Batas_Lunas)";
-
-                using (SqlCommand cmd = new SqlCommand(query, conn))
+                using (var tx = conn.BeginTransaction())
                 {
-                    cmd.Parameters.AddWithValue("@ID_Pesanan", idPesanan);
-                    cmd.Parameters.AddWithValue("@Total_Harga", totalHarga);
-                    cmd.Parameters.AddWithValue("@Metode_Pembayaran", plhMtd.SelectedItem.ToString());
-                    cmd.Parameters.AddWithValue("@Status_Pembayaran", plhSts.SelectedItem.ToString());
-                    cmd.Parameters.AddWithValue("@Batas_Lunas", batasLunas);
-
-                    int rows = cmd.ExecuteNonQuery();
-                    if (rows > 0)
+                    try
                     {
-                        MessageBox.Show("Data berhasil ditambahkan!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        using (var cmd = new SqlCommand("AddPembayaran", conn, tx))
+                        {
+                            cmd.CommandType = CommandType.StoredProcedure;
+                            cmd.Parameters.AddWithValue("@ID_Pesanan", idPesanan);
+                            cmd.Parameters.AddWithValue("@Total_Harga", totalHarga);
+                            cmd.Parameters.AddWithValue("@Metode_Pembayaran", plhMtd.SelectedItem.ToString());
+                            cmd.Parameters.AddWithValue("@Status_Pembayaran", plhSts.SelectedItem.ToString());
+                            cmd.Parameters.AddWithValue("@Batas_Lunas", batasLunas);
+
+                            var pNew = new SqlParameter("@NewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
+                            cmd.Parameters.Add(pNew);
+
+                            cmd.ExecuteNonQuery();
+                        }
+                        tx.Commit();
+                        MessageBox.Show("Pesanan berhasil ditambahkan!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         LoadData();
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        MessageBox.Show("Gagal menambahkan data!", "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        tx.Rollback();
+                        MessageBox.Show("Error saat menambahkan: " + ex.Message, "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }
@@ -168,32 +203,35 @@ namespace ManagemenLaundry
         {
             if (dgvPembayaran.SelectedRows.Count == 0)
             {
-                MessageBox.Show("Pilih baris untuk dihapus!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Pilih data yang akan dihapus!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
             DialogResult confirm = MessageBox.Show("Yakin ingin menghapus data ini?", "Konfirmasi", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (confirm != DialogResult.Yes) return;
 
-            int idPesanan = int.Parse(dgvPembayaran.SelectedRows[0].Cells["ID_Pesanan"].Value.ToString());
-
+            int idPesanan = (int)dgvPembayaran.SelectedRows[0].Cells["ID_Pesanan"].Value;
             using (SqlConnection conn = new SqlConnection(connectionString))
             {
                 conn.Open();
-                string query = "DELETE FROM Pembayaran WHERE ID_Pesanan = @ID_Pesanan";
-
-                using (SqlCommand cmd = new SqlCommand(query, conn))
+                using (var tx = conn.BeginTransaction())
                 {
-                    cmd.Parameters.AddWithValue("@ID_Pesanan", idPesanan);
-                    int rows = cmd.ExecuteNonQuery();
-                    if (rows > 0)
+                    try
                     {
+                        using (var cmd = new SqlCommand("DeletePembayaran", conn, tx))
+                        {
+                            cmd.CommandType = CommandType.StoredProcedure;
+                            cmd.Parameters.AddWithValue("@ID_Pesanan", idPesanan);
+                            cmd.ExecuteNonQuery();
+                        }
+                        tx.Commit();
                         MessageBox.Show("Data berhasil dihapus!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         LoadData();
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        MessageBox.Show("Gagal menghapus data!", "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        tx.Rollback();
+                        MessageBox.Show("Error saat menambahkan: " + ex.Message, "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }
@@ -206,37 +244,39 @@ namespace ManagemenLaundry
                 MessageBox.Show("Pilih baris untuk diubah!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
+            DialogResult result = MessageBox.Show("Apakah anda ingin mengubah data ini?", "Konfirmasi", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            if (result == DialogResult.No) return;
 
-            int idPesanan = int.Parse(dgvPembayaran.SelectedRows[0].Cells["ID_Pesanan"].Value.ToString());
+            int idPesanan = (int)dgvPembayaran.SelectedRows[0].Cells["ID_Pesanan"].Value;
             decimal totalHarga = HitungTotalHarga(idPesanan);
             DateTime batasLunas = HitungBatasLunas(idPesanan);
 
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (var conn = new SqlConnection(connectionString))
             {
                 conn.Open();
-                string query = @"UPDATE Pembayaran SET Total_Harga = @Total_Harga,
-                                 Metode_Pembayaran = @Metode_Pembayaran,
-                                 Status_Pembayaran = @Status_Pembayaran,
-                                 Batas_Lunas = @Batas_Lunas
-                                 WHERE ID_Pesanan = @ID_Pesanan";
-
-                using (SqlCommand cmd = new SqlCommand(query, conn))
+                using (var tx = conn.BeginTransaction())
                 {
-                    cmd.Parameters.AddWithValue("@ID_Pesanan", idPesanan);
-                    cmd.Parameters.AddWithValue("@Total_Harga", totalHarga);
-                    cmd.Parameters.AddWithValue("@Metode_Pembayaran", plhMtd.SelectedItem.ToString());
-                    cmd.Parameters.AddWithValue("@Status_Pembayaran", plhSts.SelectedItem.ToString());
-                    cmd.Parameters.AddWithValue("@Batas_Lunas", batasLunas);
-
-                    int rows = cmd.ExecuteNonQuery();
-                    if (rows > 0)
+                    try
                     {
+                        using (SqlCommand cmd = new SqlCommand("UpdatePembayaran", conn, tx))
+                        {
+                            cmd.CommandType = CommandType.StoredProcedure;
+                            cmd.Parameters.AddWithValue("@ID_Pesanan", idPesanan);
+                            cmd.Parameters.AddWithValue("@Total_Harga", totalHarga);
+                            cmd.Parameters.AddWithValue("@Metode_Pembayaran", plhMtd.SelectedItem.ToString());
+                            cmd.Parameters.AddWithValue("@Status_Pembayaran", plhSts.SelectedItem.ToString());
+                            cmd.Parameters.AddWithValue("@Batas_Lunas", batasLunas);
+
+                            cmd.ExecuteNonQuery();
+                        }
+                        tx.Commit();
                         MessageBox.Show("Data berhasil diubah!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         LoadData();
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        MessageBox.Show("Gagal mengubah data!", "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        tx.Rollback();
+                        MessageBox.Show("Error saat ubah: " + ex.Message, "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }
@@ -252,21 +292,77 @@ namespace ManagemenLaundry
         }
 
 
-        private void dgvPembayaran_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        private void dgvPembayaran_CellClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0) return;
+
             var row = dgvPembayaran.Rows[e.RowIndex];
-            int id = (int)row.Cells["ID_Pesanan"].Value;
 
             int idPesanan = Convert.ToInt32(row.Cells["ID_Pesanan"].Value);
             cmbPsn.SelectedValue = idPesanan;
-            plhMtd.Text = row.Cells["Metode_Pembayaran"].Value.ToString();
+
+            plhMtd.SelectedItem = row.Cells["Metode_Pembayaran"].Value.ToString();
             plhSts.SelectedItem = row.Cells["Status_Pembayaran"].Value.ToString();
+        }
+
+        private void EnsureIndexes()
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+                string indexScript = @"
+                    IF OBJECT_ID('dbo.Pembayaran', 'U') IS NOT NULL
+                    BEGIN
+                         IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Pembayaran_ID_Pesanan')
+                            CREATE NONCLUSTERED INDEX IX_Pembayaran_ID_Pesanan ON dbo.Pembayaran(ID_Pesanan);
+                    END
+                    ";
+                SqlCommand cmd = new SqlCommand(indexScript, conn);
+                cmd.ExecuteNonQuery();
+            }
+        }
+
+        private void AnalyzeQuery(string sqlQuery)
+        {
+            using (var conn = new SqlConnection(connectionString))
+            {
+                conn.InfoMessage += (s, e) => MessageBox.Show(e.Message, "STATISTICS INFO", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                conn.Open();
+
+                var wrapped = $@"
+                        SET STATISTICS IO ON;
+                        SET STATISTICS TIME ON;
+                        {sqlQuery};
+                        SET STATISTICS IO OFF;
+                        SET STATISTICS TIME OFF;";
+
+                using (var cmd = new SqlCommand(wrapped, conn))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+            }
         }
 
         private void cmbPsn_SelectedIndexChanged(object sender, EventArgs e)
         {
 
+        }
+
+        private void btnAnalisis_Click_1(object sender, EventArgs e)
+        {
+            string query = @"
+                    SELECT 
+                        ID_Pembayaran,
+                        ID_Pesanan,
+                        Total_Harga,
+                        Metode_Pembayaran,
+                        Status_Pembayaran,
+                        Billing_Dibuat,
+                        Batas_Lunas
+                    FROM Pembayaran;
+                ";
+
+            AnalyzeQuery(query);
         }
     }
 }

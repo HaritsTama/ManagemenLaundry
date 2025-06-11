@@ -43,6 +43,7 @@
             this.dgvPesanan = new System.Windows.Forms.DataGridView();
             this.BrEkstra = new System.Windows.Forms.Label();
             this.clbTambahan = new System.Windows.Forms.CheckedListBox();
+            this.btnAnalisis = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dgvPesanan)).BeginInit();
             this.SuspendLayout();
             // 
@@ -63,7 +64,7 @@
             "Proses",
             "Selesai",
             "Dibatalkan"});
-            this.plhStatus.Location = new System.Drawing.Point(233, 116);
+            this.plhStatus.Location = new System.Drawing.Point(233, 105);
             this.plhStatus.Name = "plhStatus";
             this.plhStatus.Size = new System.Drawing.Size(249, 24);
             this.plhStatus.TabIndex = 8;
@@ -72,7 +73,7 @@
             // 
             this.status.AutoSize = true;
             this.status.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.status.Location = new System.Drawing.Point(48, 116);
+            this.status.Location = new System.Drawing.Point(48, 105);
             this.status.Name = "status";
             this.status.Size = new System.Drawing.Size(136, 20);
             this.status.TabIndex = 11;
@@ -82,7 +83,7 @@
             // 
             this.tipeLayanan.AutoSize = true;
             this.tipeLayanan.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.tipeLayanan.Location = new System.Drawing.Point(48, 175);
+            this.tipeLayanan.Location = new System.Drawing.Point(48, 155);
             this.tipeLayanan.Name = "tipeLayanan";
             this.tipeLayanan.Size = new System.Drawing.Size(121, 20);
             this.tipeLayanan.TabIndex = 12;
@@ -91,7 +92,7 @@
             // plhLayanan
             // 
             this.plhLayanan.FormattingEnabled = true;
-            this.plhLayanan.Location = new System.Drawing.Point(233, 175);
+            this.plhLayanan.Location = new System.Drawing.Point(233, 155);
             this.plhLayanan.Name = "plhLayanan";
             this.plhLayanan.Size = new System.Drawing.Size(249, 24);
             this.plhLayanan.TabIndex = 13;
@@ -100,7 +101,7 @@
             // 
             this.Berat.AutoSize = true;
             this.Berat.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.Berat.Location = new System.Drawing.Point(48, 240);
+            this.Berat.Location = new System.Drawing.Point(48, 204);
             this.Berat.Name = "Berat";
             this.Berat.Size = new System.Drawing.Size(55, 20);
             this.Berat.TabIndex = 14;
@@ -108,14 +109,14 @@
             // 
             // txtBerat
             // 
-            this.txtBerat.Location = new System.Drawing.Point(233, 240);
+            this.txtBerat.Location = new System.Drawing.Point(233, 204);
             this.txtBerat.Name = "txtBerat";
             this.txtBerat.Size = new System.Drawing.Size(249, 22);
             this.txtBerat.TabIndex = 15;
             // 
             // btnRefreshP
             // 
-            this.btnRefreshP.Location = new System.Drawing.Point(519, 302);
+            this.btnRefreshP.Location = new System.Drawing.Point(519, 262);
             this.btnRefreshP.Name = "btnRefreshP";
             this.btnRefreshP.Size = new System.Drawing.Size(224, 49);
             this.btnRefreshP.TabIndex = 30;
@@ -125,7 +126,7 @@
             // 
             // btnUbahP
             // 
-            this.btnUbahP.Location = new System.Drawing.Point(519, 213);
+            this.btnUbahP.Location = new System.Drawing.Point(519, 191);
             this.btnUbahP.Name = "btnUbahP";
             this.btnUbahP.Size = new System.Drawing.Size(224, 49);
             this.btnUbahP.TabIndex = 29;
@@ -135,7 +136,7 @@
             // 
             // btnHapusP
             // 
-            this.btnHapusP.Location = new System.Drawing.Point(519, 130);
+            this.btnHapusP.Location = new System.Drawing.Point(519, 117);
             this.btnHapusP.Name = "btnHapusP";
             this.btnHapusP.Size = new System.Drawing.Size(224, 49);
             this.btnHapusP.TabIndex = 28;
@@ -170,13 +171,13 @@
             this.dgvPesanan.RowTemplate.Height = 24;
             this.dgvPesanan.Size = new System.Drawing.Size(691, 266);
             this.dgvPesanan.TabIndex = 32;
-            this.dgvPesanan.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvPesanan_CellContentClick);
+            this.dgvPesanan.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvPesanan_CellClick);
             // 
             // BrEkstra
             // 
             this.BrEkstra.AutoSize = true;
             this.BrEkstra.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.BrEkstra.Location = new System.Drawing.Point(48, 322);
+            this.BrEkstra.Location = new System.Drawing.Point(48, 291);
             this.BrEkstra.Name = "BrEkstra";
             this.BrEkstra.Size = new System.Drawing.Size(95, 20);
             this.BrEkstra.TabIndex = 36;
@@ -185,16 +186,27 @@
             // clbTambahan
             // 
             this.clbTambahan.FormattingEnabled = true;
-            this.clbTambahan.Location = new System.Drawing.Point(233, 313);
+            this.clbTambahan.Location = new System.Drawing.Point(233, 256);
             this.clbTambahan.Name = "clbTambahan";
-            this.clbTambahan.Size = new System.Drawing.Size(249, 38);
+            this.clbTambahan.Size = new System.Drawing.Size(249, 106);
             this.clbTambahan.TabIndex = 37;
+            // 
+            // btnAnalisis
+            // 
+            this.btnAnalisis.Location = new System.Drawing.Point(519, 329);
+            this.btnAnalisis.Name = "btnAnalisis";
+            this.btnAnalisis.Size = new System.Drawing.Size(224, 33);
+            this.btnAnalisis.TabIndex = 38;
+            this.btnAnalisis.Text = "Analisis";
+            this.btnAnalisis.UseVisualStyleBackColor = true;
+            this.btnAnalisis.Click += new System.EventHandler(this.btnAnalisis_Click);
             // 
             // MasukanPesananForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 691);
+            this.Controls.Add(this.btnAnalisis);
             this.Controls.Add(this.clbTambahan);
             this.Controls.Add(this.BrEkstra);
             this.Controls.Add(this.dgvPesanan);
@@ -235,5 +247,6 @@
         private System.Windows.Forms.DataGridView dgvPesanan;
         private System.Windows.Forms.Label BrEkstra;
         private System.Windows.Forms.CheckedListBox clbTambahan;
+        private System.Windows.Forms.Button btnAnalisis;
     }
 }

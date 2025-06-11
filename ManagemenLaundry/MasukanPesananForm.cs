@@ -8,17 +8,25 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Runtime.Caching;
+
 
 namespace ManagemenLaundry
 {
-    public partial class MasukanPesananForm: Form
+    public partial class MasukanPesananForm : Form
     {
         private string connectionString = "Data Source= LAPTOP-RFI0KF85\\HARITSZHAFRAN ;Initial Catalog=SistemManajemenLaundry;Integrated Security=True";
-        private DataTable dtPelanggan;
-        private DataTable dtLayanan;
-        private DataTable dtBarang;
 
         private Dictionary<int, int> barangQuantities = new Dictionary<int, int>();
+
+        private readonly MemoryCache _cache = MemoryCache.Default;
+        private readonly CacheItemPolicy _policy = new CacheItemPolicy
+        {
+            AbsoluteExpiration = DateTimeOffset.Now.AddMinutes(5) // cache expires after 5 minutes
+        };
+        private const string PelangganCacheKey = "PelangganData";
+        private const string LayananCacheKey = "LayananData";
+        private const string BarangCacheKey = "BarangData";
 
         public MasukanPesananForm()
         {
@@ -27,6 +35,7 @@ namespace ManagemenLaundry
 
         private void MasukanPesananForm_Load(object sender, EventArgs e)
         {
+            EnsureIndexes();
             LoadComboBoxData();
             LoadData();
             clbTambahan.ItemCheck += clbTambahan_ItemCheck;
@@ -38,30 +47,51 @@ namespace ManagemenLaundry
             {
                 conn.Open();
 
-                // Pelanggan
-                dtPelanggan = new DataTable();
-                new SqlDataAdapter("SELECT ID_Pelanggan, Nama FROM Pelanggan", conn).Fill(dtPelanggan);
-                plhPelanggan.DataSource = dtPelanggan;
+                // Load Pelanggan (with cache)
+                DataTable pelangganData = _cache.Get(PelangganCacheKey) as DataTable;
+                if (pelangganData == null)
+                {
+                    pelangganData = new DataTable();
+                    {
+                        new SqlDataAdapter("SELECT ID_Pelanggan, Nama FROM Pelanggan", conn).Fill(pelangganData);
+                    }
+                    _cache.Set(PelangganCacheKey, pelangganData, _policy);
+                }
+
+                plhPelanggan.DataSource = pelangganData;
                 plhPelanggan.DisplayMember = "Nama";
                 plhPelanggan.ValueMember = "ID_Pelanggan";
 
                 // Layanan
-                dtLayanan = new DataTable();
-                new SqlDataAdapter("SELECT ID_Layanan, Nama_Layanan FROM Layanan", conn).Fill(dtLayanan);
-                plhLayanan.DataSource = dtLayanan;
+                DataTable LayananData = _cache.Get(LayananCacheKey) as DataTable;
+                if (LayananData == null)
+                {
+                    LayananData = new DataTable();
+                    {
+                        new SqlDataAdapter("SELECT ID_Layanan, Nama_Layanan FROM Layanan", conn).Fill(LayananData);
+                    }
+                    _cache.Set(LayananCacheKey, LayananData, _policy);
+                }
+
+                plhLayanan.DataSource = LayananData;
                 plhLayanan.DisplayMember = "Nama_Layanan";
                 plhLayanan.ValueMember = "ID_Layanan";
 
                 // Barang (extras)
-                dtBarang = new DataTable();
-                new SqlDataAdapter("SELECT ID_Barang, Ekstra_Barang FROM Barang", conn).Fill(dtBarang);
-                clbTambahan.DataSource = dtBarang;
+                DataTable BarangData = _cache.Get(BarangCacheKey) as DataTable;
+                if (BarangData == null)
+                {
+                    BarangData = new DataTable();
+                    {
+                        new SqlDataAdapter("SELECT ID_Barang, Ekstra_Barang FROM Barang", conn).Fill(BarangData);
+                    }
+                    _cache.Set(BarangCacheKey, BarangData, _policy);
+                }
+
+                clbTambahan.DataSource = BarangData;
                 clbTambahan.DisplayMember = "Ekstra_Barang";
                 clbTambahan.ValueMember = "ID_Barang";
 
-                // Status Laundry
-                plhStatus.Items.Clear();
-                plhStatus.Items.AddRange(new[] { "Proses", "Selesai", "Dibatalkan" });
             }
         }
 
@@ -81,13 +111,16 @@ namespace ManagemenLaundry
             {
                 var query = @"
                     SELECT p.ID_Pesanan,
-                           pel.Nama AS Nama_Pelanggan,
-                           l.Nama_Layanan,
-                           p.Berat,
-                           p.Status_Laundry
-                    FROM Pesanan p
-                    JOIN Pelanggan pel ON p.ID_Pelanggan = pel.ID_Pelanggan
-                    JOIN Layanan l ON p.ID_Layanan = l.ID_Layanan";
+                       p.ID_Pelanggan,
+                       pel.Nama AS Nama_Pelanggan,
+                       p.ID_Layanan,
+                       l.Nama_Layanan,
+                       p.Berat,
+                       p.Status_Laundry
+                FROM Pesanan p
+                JOIN Pelanggan pel ON p.ID_Pelanggan = pel.ID_Pelanggan
+                JOIN Layanan l ON p.ID_Layanan = l.ID_Layanan
+                ";
 
                 var da = new SqlDataAdapter(query, conn);
                 var dt = new DataTable();
@@ -115,44 +148,47 @@ namespace ManagemenLaundry
             DialogResult result = MessageBox.Show("Apakah anda ingin menambahkan data pesanan?", "Konfirmasi", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (result == DialogResult.No) return;
 
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            var barangTable = new DataTable();
+            barangTable.Columns.Add("ID_Barang", typeof(int));
+            barangTable.Columns.Add("Jumlah", typeof(int));
+            foreach (DataRowView dr in clbTambahan.CheckedItems)
+            {
+                int id = (int)dr["ID_Barang"];
+                int qty = barangQuantities.ContainsKey(id) ? barangQuantities[id] : 1;
+                barangTable.Rows.Add(id, qty);
+            }
+
+            using (var conn = new SqlConnection(connectionString))
             {
                 conn.Open();
-                using (SqlTransaction tran = conn.BeginTransaction())
+                using (var tx = conn.BeginTransaction())
                 {
                     try
                     {
-                        // Insert Pesanan
-                        string qPesanan = "INSERT INTO Pesanan (ID_Pelanggan, ID_Layanan, Berat, Status_Laundry) VALUES (@pel, @lay, @ber, @stat); SELECT CAST(SCOPE_IDENTITY() AS INT);";
-                        var cmd = new SqlCommand(qPesanan, conn, tran);
-                        cmd.Parameters.AddWithValue("@pel", plhPelanggan.SelectedValue);
-                        cmd.Parameters.AddWithValue("@lay", plhLayanan.SelectedValue);
-                        cmd.Parameters.AddWithValue("@ber", berat);
-                        cmd.Parameters.AddWithValue("@stat", plhStatus.SelectedItem.ToString());
-                        int newId = (int)cmd.ExecuteScalar();
-
-                        // Insert PesananBarang (jumlah default 1)
-                        foreach (DataRowView dr in clbTambahan.CheckedItems)
+                        using (var cmd = new SqlCommand("AddFullPesanan", conn, tx))
                         {
-                            int idBarang = (int)dr.Row["ID_Barang"];
-                            int jumlah = barangQuantities.ContainsKey(idBarang) ? barangQuantities[idBarang] : 1;
+                            cmd.CommandType = CommandType.StoredProcedure;
+                            cmd.Parameters.AddWithValue("@ID_Pelanggan", plhPelanggan.SelectedValue);
+                            cmd.Parameters.AddWithValue("@ID_Layanan", plhLayanan.SelectedValue);
+                            cmd.Parameters.AddWithValue("@Berat", berat);
+                            cmd.Parameters.AddWithValue("@Status_Laundry", plhStatus.SelectedItem.ToString());
 
-                            var qPB = "INSERT INTO PesananBarang (ID_Pesanan, ID_Barang, Jumlah) VALUES (@idp, @idb, @jml)";
-                            var cmd2 = new SqlCommand(qPB, conn, tran);
-                            cmd2.Parameters.AddWithValue("@idp", newId);
-                            cmd2.Parameters.AddWithValue("@idb", idBarang);
-                            cmd2.Parameters.AddWithValue("@jml", jumlah);
-                            cmd2.ExecuteNonQuery();
+                            var tvp = cmd.Parameters.AddWithValue("@BarangList", barangTable);
+                            tvp.SqlDbType = SqlDbType.Structured;
+                            tvp.TypeName = "PesananBarangType";
+
+                            var output = new SqlParameter("@NewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
+                            cmd.Parameters.Add(output);
+                            cmd.ExecuteNonQuery();
                         }
-
-                        tran.Commit();
+                        tx.Commit();
                         MessageBox.Show("Pesanan berhasil ditambahkan!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         LoadData();
                     }
                     catch (Exception ex)
                     {
-                        tran.Rollback();
-                        MessageBox.Show("Error: " + ex.Message, "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        tx.Rollback();
+                        MessageBox.Show("Error saat menambahkan: " + ex.Message, "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }
@@ -166,27 +202,32 @@ namespace ManagemenLaundry
                 MessageBox.Show("Pilih data yang akan dihapus!", "Peringatan", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
-            DialogResult result = MessageBox.Show("Apakah anda ingin menghapus pesanan ini?", "Konfirmasi", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            DialogResult result = MessageBox.Show("Apakah anda ingin menghapus data ini?", "Konfirmasi", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
             if (result == DialogResult.No) return;
 
             int id = (int)dgvPesanan.SelectedRows[0].Cells["ID_Pesanan"].Value;
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (var conn = new SqlConnection(connectionString))
             {
-                try
+                conn.Open();
+                using (var tx = conn.BeginTransaction())
                 {
-                    conn.Open();
-                    var del = new SqlCommand("DELETE FROM Pesanan WHERE ID_Pesanan=@id", conn);
-                    del.Parameters.AddWithValue("@id", id);
-                    int rows = del.ExecuteNonQuery();
-                    if (rows > 0)
+                    try
                     {
+                        using (var cmd = new SqlCommand("DeletePesanan", conn, tx))
+                        {
+                            cmd.CommandType = CommandType.StoredProcedure;
+                            cmd.Parameters.AddWithValue("@ID_Pesanan", id);
+                            cmd.ExecuteNonQuery();
+                        }
+                        tx.Commit();
                         MessageBox.Show("Pesanan berhasil dihapus!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         LoadData();
                     }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Error: " + ex.Message, "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    catch (Exception ex)
+                    {
+                        tx.Rollback();
+                        MessageBox.Show("Error saat hapus: " + ex.Message, "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
                 }
             }
         }
@@ -208,50 +249,46 @@ namespace ManagemenLaundry
                 return;
             }
 
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            var barangTable = new DataTable();
+            barangTable.Columns.Add("ID_Barang", typeof(int));
+            barangTable.Columns.Add("Jumlah", typeof(int));
+            foreach (DataRowView dr in clbTambahan.CheckedItems)
+            {
+                int bid = (int)dr["ID_Barang"];
+                int qty = barangQuantities.ContainsKey(bid) ? barangQuantities[bid] : 1;
+                barangTable.Rows.Add(bid, qty);
+            }
+
+            using (var conn = new SqlConnection(connectionString))
             {
                 conn.Open();
-                using (SqlTransaction tran = conn.BeginTransaction())
+                using (var tx = conn.BeginTransaction())
                 {
                     try
                     {
-                        // Update Pesanan
-                        var upd = new SqlCommand(
-                            "UPDATE Pesanan SET ID_Pelanggan=@pel, ID_Layanan=@lay, Berat=@ber, Status_Laundry=@stat WHERE ID_Pesanan=@id", conn, tran);
-                        upd.Parameters.AddWithValue("@pel", plhPelanggan.SelectedValue);
-                        upd.Parameters.AddWithValue("@lay", plhLayanan.SelectedValue);
-                        upd.Parameters.AddWithValue("@ber", berat);
-                        upd.Parameters.AddWithValue("@stat", plhStatus.SelectedItem.ToString());
-                        upd.Parameters.AddWithValue("@id", id);
-                        upd.ExecuteNonQuery();
-
-                        // Reset PesananBarang
-                        new SqlCommand("DELETE FROM PesananBarang WHERE ID_Pesanan=@id", conn, tran)
-                            .Parameters.AddWithValue("@id", id);
-                        new SqlCommand("DELETE FROM PesananBarang WHERE ID_Pesanan=@id", conn, tran).ExecuteNonQuery();
-
-                        // Reinsert extras
-                        foreach (DataRowView dr in clbTambahan.CheckedItems)
+                        using (var cmd = new SqlCommand("UpdateFullPesanan", conn, tx))
                         {
-                            int idBarang = (int)dr.Row["ID_Barang"];
-                            int jumlah = barangQuantities.ContainsKey(idBarang) ? barangQuantities[idBarang] : 1;
+                            cmd.CommandType = CommandType.StoredProcedure;
+                            cmd.Parameters.AddWithValue("@ID_Pesanan", id);
+                            cmd.Parameters.AddWithValue("@ID_Pelanggan", plhPelanggan.SelectedValue);
+                            cmd.Parameters.AddWithValue("@ID_Layanan", plhLayanan.SelectedValue);
+                            cmd.Parameters.AddWithValue("@Berat", berat);
+                            cmd.Parameters.AddWithValue("@Status_Laundry", plhStatus.SelectedItem.ToString());
 
-                            var qPB = "INSERT INTO PesananBarang (ID_Pesanan, ID_Barang, Jumlah) VALUES (@idp, @idb, @jml)";
-                            var cmd2 = new SqlCommand(qPB, conn, tran);
-                            cmd2.Parameters.AddWithValue("@idp", id); // <-- use id here
-                            cmd2.Parameters.AddWithValue("@idb", idBarang);
-                            cmd2.Parameters.AddWithValue("@jml", jumlah);
-                            cmd2.ExecuteNonQuery();
+                            var tvp = cmd.Parameters.AddWithValue("@BarangList", barangTable);
+                            tvp.SqlDbType = SqlDbType.Structured;
+                            tvp.TypeName = "PesananBarangType";
+
+                            cmd.ExecuteNonQuery();
                         }
-
-                        tran.Commit();
+                        tx.Commit();
                         MessageBox.Show("Pesanan berhasil diubah!", "Sukses", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         LoadData();
                     }
                     catch (Exception ex)
                     {
-                        tran.Rollback();
-                        MessageBox.Show("Error: " + ex.Message, "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        tx.Rollback();
+                        MessageBox.Show("Error saat ubah: " + ex.Message, "Kesalahan", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }
@@ -265,7 +302,7 @@ namespace ManagemenLaundry
             MessageBox.Show($"Jumlah Kolom: {dgvPesanan.ColumnCount}\nJumlah Baris: {dgvPesanan.RowCount}", "Debugging DataGridView", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
-        private void dgvPesanan_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        private void dgvPesanan_CellClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0) return;
             var row = dgvPesanan.Rows[e.RowIndex];
@@ -279,7 +316,8 @@ namespace ManagemenLaundry
             plhStatus.SelectedItem = row.Cells["Status_Laundry"].Value.ToString();
 
             // Check extras
-            foreach (DataRowView dr in clbTambahan.Items)
+            var itemsCopy = clbTambahan.Items.Cast<DataRowView>().ToList();
+            foreach (DataRowView dr in itemsCopy)
             {
                 bool cek = false;
                 using (SqlConnection conn = new SqlConnection(connectionString))
@@ -326,5 +364,67 @@ namespace ManagemenLaundry
                 }
             });
         }
+
+        private void AnalyzeQuery(string sqlQuery)
+        {
+            using (var conn = new SqlConnection(connectionString))
+            {
+                conn.InfoMessage += (s, e) => MessageBox.Show(e.Message, "STATISTICS INFO", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                conn.Open();
+
+                var wrapped = $@"
+                        SET STATISTICS IO ON;
+                        SET STATISTICS TIME ON;
+                        {sqlQuery};
+                        SET STATISTICS IO OFF;
+                        SET STATISTICS TIME OFF;";
+
+                using (var cmd = new SqlCommand(wrapped, conn))
+                {
+                    cmd.ExecuteNonQuery();
+                }
+            }
+        }
+
+        private void btnAnalisis_Click(object sender, EventArgs e)
+        {
+            string query = @"
+                    SELECT p.ID_Pesanan,
+                           p.ID_Pelanggan,
+                           pel.Nama AS Nama_Pelanggan,
+                           p.ID_Layanan,
+                           l.Nama_Layanan,
+                           p.Berat,
+                           p.Status_Laundry
+                    FROM Pesanan p
+                    JOIN Pelanggan pel ON p.ID_Pelanggan = pel.ID_Pelanggan
+                    JOIN Layanan l ON p.ID_Layanan = l.ID_Layanan";
+
+            AnalyzeQuery(query);
+        }
+        
+        private void EnsureIndexes()
+        {
+            using (SqlConnection conn = new SqlConnection(connectionString))
+            {
+                conn.Open();
+                string indexScript = @"
+                    IF OBJECT_ID('dbo.Pesanan', 'U') IS NOT NULL
+                    BEGIN
+                        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Pesanan_ID_Pelanggan')
+                            CREATE NONCLUSTERED INDEX IX_Pesanan_ID_Pelanggan ON dbo.Pesanan(ID_Pelanggan);
+
+                        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Pesanan_ID_Layanan')
+                            CREATE NONCLUSTERED INDEX IX_Pesanan_ID_Layanan ON dbo.Pesanan(ID_Layanan);
+
+                        IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_PesananBarang_ID_Pesanan')
+                            CREATE NONCLUSTERED INDEX IX_PesananBarang_ID_Pesanan ON dbo.PesananBarang(ID_Pesanan);
+                    END
+                    ";
+                SqlCommand cmd = new SqlCommand(indexScript, conn);
+                cmd.ExecuteNonQuery();
+            }
+        }
+
     }
 }

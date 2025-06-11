@@ -39,6 +39,7 @@
             this.dgvPembayaran = new System.Windows.Forms.DataGridView();
             this.label1 = new System.Windows.Forms.Label();
             this.cmbPsn = new System.Windows.Forms.ComboBox();
+            this.btnAnalisis = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.dgvPembayaran)).BeginInit();
             this.SuspendLayout();
             // 
@@ -87,7 +88,7 @@
             // 
             // btnRefreshPe
             // 
-            this.btnRefreshPe.Location = new System.Drawing.Point(561, 219);
+            this.btnRefreshPe.Location = new System.Drawing.Point(561, 178);
             this.btnRefreshPe.Name = "btnRefreshPe";
             this.btnRefreshPe.Size = new System.Drawing.Size(186, 35);
             this.btnRefreshPe.TabIndex = 49;
@@ -97,7 +98,7 @@
             // 
             // btnUbahPe
             // 
-            this.btnUbahPe.Location = new System.Drawing.Point(561, 158);
+            this.btnUbahPe.Location = new System.Drawing.Point(561, 131);
             this.btnUbahPe.Name = "btnUbahPe";
             this.btnUbahPe.Size = new System.Drawing.Size(186, 35);
             this.btnUbahPe.TabIndex = 48;
@@ -107,7 +108,7 @@
             // 
             // btnHapusPe
             // 
-            this.btnHapusPe.Location = new System.Drawing.Point(561, 104);
+            this.btnHapusPe.Location = new System.Drawing.Point(561, 83);
             this.btnHapusPe.Name = "btnHapusPe";
             this.btnHapusPe.Size = new System.Drawing.Size(186, 35);
             this.btnHapusPe.TabIndex = 47;
@@ -117,7 +118,7 @@
             // 
             // btnTambahPe
             // 
-            this.btnTambahPe.Location = new System.Drawing.Point(561, 43);
+            this.btnTambahPe.Location = new System.Drawing.Point(561, 37);
             this.btnTambahPe.Name = "btnTambahPe";
             this.btnTambahPe.Size = new System.Drawing.Size(186, 35);
             this.btnTambahPe.TabIndex = 46;
@@ -134,7 +135,7 @@
             this.dgvPembayaran.RowTemplate.Height = 24;
             this.dgvPembayaran.Size = new System.Drawing.Size(688, 197);
             this.dgvPembayaran.TabIndex = 50;
-            this.dgvPembayaran.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvPembayaran_CellContentClick);
+            this.dgvPembayaran.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvPembayaran_CellClick);
             // 
             // label1
             // 
@@ -155,11 +156,22 @@
             this.cmbPsn.TabIndex = 53;
             this.cmbPsn.SelectedIndexChanged += new System.EventHandler(this.cmbPsn_SelectedIndexChanged);
             // 
+            // btnAnalisis
+            // 
+            this.btnAnalisis.Location = new System.Drawing.Point(561, 224);
+            this.btnAnalisis.Name = "btnAnalisis";
+            this.btnAnalisis.Size = new System.Drawing.Size(186, 35);
+            this.btnAnalisis.TabIndex = 54;
+            this.btnAnalisis.Text = "Analisis";
+            this.btnAnalisis.UseVisualStyleBackColor = true;
+            this.btnAnalisis.Click += new System.EventHandler(this.btnAnalisis_Click_1);
+            // 
             // PembayaranForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 496);
+            this.Controls.Add(this.btnAnalisis);
             this.Controls.Add(this.cmbPsn);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.dgvPembayaran);
@@ -173,6 +185,7 @@
             this.Controls.Add(this.plhMtd);
             this.Name = "PembayaranForm";
             this.Text = "PembayaranForm";
+            this.Load += new System.EventHandler(this.PembayaranForm_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dgvPembayaran)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -191,5 +204,6 @@
         private System.Windows.Forms.DataGridView dgvPembayaran;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.ComboBox cmbPsn;
+        private System.Windows.Forms.Button btnAnalisis;
     }
 }

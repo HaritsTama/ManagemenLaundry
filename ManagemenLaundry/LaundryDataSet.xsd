@@ -1,0 +1,77 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<xs:schema id="LaundryDataSet" targetNamespace="http://tempuri.org/LaundryDataSet.xsd" xmlns:mstns="http://tempuri.org/LaundryDataSet.xsd" xmlns="http://tempuri.org/LaundryDataSet.xsd" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata" xmlns:msprop="urn:schemas-microsoft-com:xml-msprop" attributeFormDefault="qualified" elementFormDefault="qualified">
+  <xs:annotation>
+    <xs:appinfo source="urn:schemas-microsoft-com:xml-msdatasource">
+      <DataSource DefaultConnectionIndex="0" FunctionsComponentName="QueriesTableAdapter" Modifier="AutoLayout, AnsiClass, Class, Public" SchemaSerializationMode="IncludeSchema" xmlns="urn:schemas-microsoft-com:xml-msdatasource">
+        <Connections>
+          <Connection AppSettingsObjectName="Settings" AppSettingsPropertyName="SistemManajemenLaundryConnectionString" ConnectionStringObject="" IsAppSettingsProperty="true" Modifier="Assembly" Name="SistemManajemenLaundryConnectionString (Settings)" ParameterPrefix="@" PropertyReference="ApplicationSettings.ManagemenLaundry.Properties.Settings.GlobalReference.Default.SistemManajemenLaundryConnectionString" Provider="System.Data.SqlClient" />
+        </Connections>
+        <Tables>
+          <TableAdapter BaseClass="System.ComponentModel.Component" DataAccessorModifier="AutoLayout, AnsiClass, Class, Public" DataAccessorName="DataTable1TableAdapter" GeneratorDataComponentClassName="DataTable1TableAdapter" Name="DataTable1" UserDataComponentName="DataTable1TableAdapter">
+            <MainSource>
+              <DbSource ConnectionRef="SistemManajemenLaundryConnectionString (Settings)" DbObjectType="Unknown" FillMethodModifier="Public" FillMethodName="Fill" GenerateMethods="Both" GenerateShortCommands="false" GeneratorGetMethodName="GetData" GeneratorSourceName="Fill" GetMethodModifier="Public" GetMethodName="GetData" QueryType="Rowset" ScalarCallRetval="System.Object, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" UseOptimisticConcurrency="true" UserGetMethodName="GetData" UserSourceName="Fill">
+                <SelectCommand>
+                  <DbCommand CommandType="Text" ModifiedByUser="true">
+                    <CommandText>SELECT    pgn.Nama, lyn.Nama_Layanan, psn.ID_Pesanan, psn.Berat, ISNULL(SUM(pb.Jumlah * brg.Harga_Ekstra), 0) AS Total_Harga_Ekstra, pmby.Total_Harga
+FROM         Pesanan AS psn INNER JOIN
+                      Pelanggan AS pgn ON psn.ID_Pelanggan = pgn.ID_Pelanggan INNER JOIN
+                      Layanan AS lyn ON psn.ID_Layanan = lyn.ID_Layanan LEFT OUTER JOIN
+                      PesananBarang AS pb ON psn.ID_Pesanan = pb.ID_Pesanan LEFT OUTER JOIN
+                      Barang AS brg ON pb.ID_Barang = brg.ID_Barang INNER JOIN
+                      Pembayaran AS pmby ON psn.ID_Pesanan = pmby.ID_Pesanan
+GROUP BY pgn.Nama, lyn.Nama_Layanan, psn.ID_Pesanan, psn.Berat, pmby.Total_Harga</CommandText>
+                    <Parameters />
+                  </DbCommand>
+                </SelectCommand>
+              </DbSource>
+            </MainSource>
+            <Mappings>
+              <Mapping SourceColumn="Nama" DataSetColumn="Nama" />
+              <Mapping SourceColumn="Nama_Layanan" DataSetColumn="Nama_Layanan" />
+              <Mapping SourceColumn="ID_Pesanan" DataSetColumn="ID_Pesanan" />
+              <Mapping SourceColumn="Berat" DataSetColumn="Berat" />
+              <Mapping SourceColumn="Total_Harga_Ekstra" DataSetColumn="Total_Harga_Ekstra" />
+              <Mapping SourceColumn="Total_Harga" DataSetColumn="Total_Harga" />
+            </Mappings>
+            <Sources />
+          </TableAdapter>
+        </Tables>
+        <Sources />
+      </DataSource>
+    </xs:appinfo>
+  </xs:annotation>
+  <xs:element name="LaundryDataSet" msdata:IsDataSet="true" msdata:UseCurrentLocale="true" msprop:EnableTableAdapterManager="true" msprop:Generator_UserDSName="LaundryDataSet" msprop:Generator_DataSetName="LaundryDataSet">
+    <xs:complexType>
+      <xs:choice minOccurs="0" maxOccurs="unbounded">
+        <xs:element name="DataTable1" msprop:Generator_RowEvHandlerName="DataTable1RowChangeEventHandler" msprop:Generator_RowDeletedName="DataTable1RowDeleted" msprop:Generator_RowDeletingName="DataTable1RowDeleting" msprop:Generator_RowEvArgName="DataTable1RowChangeEvent" msprop:Generator_TablePropName="DataTable1" msprop:Generator_RowChangedName="DataTable1RowChanged" msprop:Generator_RowChangingName="DataTable1RowChanging" msprop:Generator_TableClassName="DataTable1DataTable" msprop:Generator_RowClassName="DataTable1Row" msprop:Generator_TableVarName="tableDataTable1" msprop:Generator_UserTableName="DataTable1">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="Nama" msprop:Generator_ColumnPropNameInRow="Nama" msprop:Generator_ColumnPropNameInTable="NamaColumn" msprop:Generator_ColumnVarNameInTable="columnNama" msprop:Generator_UserColumnName="Nama">
+                <xs:simpleType>
+                  <xs:restriction base="xs:string">
+                    <xs:maxLength value="50" />
+                  </xs:restriction>
+                </xs:simpleType>
+              </xs:element>
+              <xs:element name="Nama_Layanan" msprop:Generator_ColumnPropNameInRow="Nama_Layanan" msprop:Generator_ColumnPropNameInTable="Nama_LayananColumn" msprop:Generator_ColumnVarNameInTable="columnNama_Layanan" msprop:Generator_UserColumnName="Nama_Layanan">
+                <xs:simpleType>
+                  <xs:restriction base="xs:string">
+                    <xs:maxLength value="10" />
+                  </xs:restriction>
+                </xs:simpleType>
+              </xs:element>
+              <xs:element name="ID_Pesanan" msdata:ReadOnly="true" msdata:AutoIncrement="true" msdata:AutoIncrementSeed="-1" msdata:AutoIncrementStep="-1" msprop:Generator_ColumnPropNameInRow="ID_Pesanan" msprop:Generator_ColumnPropNameInTable="ID_PesananColumn" msprop:Generator_ColumnVarNameInTable="columnID_Pesanan" msprop:Generator_UserColumnName="ID_Pesanan" type="xs:int" />
+              <xs:element name="Berat" msprop:Generator_ColumnPropNameInRow="Berat" msprop:Generator_ColumnPropNameInTable="BeratColumn" msprop:Generator_ColumnVarNameInTable="columnBerat" msprop:Generator_UserColumnName="Berat" type="xs:double" />
+              <xs:element name="Total_Harga_Ekstra" msdata:ReadOnly="true" msprop:Generator_ColumnPropNameInRow="Total_Harga_Ekstra" msprop:Generator_ColumnPropNameInTable="Total_Harga_EkstraColumn" msprop:Generator_ColumnVarNameInTable="columnTotal_Harga_Ekstra" msprop:Generator_UserColumnName="Total_Harga_Ekstra" type="xs:decimal" minOccurs="0" />
+              <xs:element name="Total_Harga" msprop:Generator_ColumnPropNameInRow="Total_Harga" msprop:Generator_ColumnPropNameInTable="Total_HargaColumn" msprop:Generator_ColumnVarNameInTable="columnTotal_Harga" msprop:Generator_UserColumnName="Total_Harga" type="xs:decimal" />
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:choice>
+    </xs:complexType>
+    <xs:unique name="Constraint1" msdata:PrimaryKey="true">
+      <xs:selector xpath=".//mstns:DataTable1" />
+      <xs:field xpath="mstns:ID_Pesanan" />
+    </xs:unique>
+  </xs:element>
+</xs:schema>

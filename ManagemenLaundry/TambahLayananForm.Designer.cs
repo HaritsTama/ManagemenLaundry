@@ -55,9 +55,9 @@
             this.IDLY.Font = new System.Drawing.Font("Microsoft Sans Serif", 10.2F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.IDLY.Location = new System.Drawing.Point(30, 117);
             this.IDLY.Name = "IDLY";
-            this.IDLY.Size = new System.Drawing.Size(161, 20);
+            this.IDLY.Size = new System.Drawing.Size(61, 20);
             this.IDLY.TabIndex = 5;
-            this.IDLY.Text = "Waktu Pengerjaan";
+            this.IDLY.Text = "Waktu";
             // 
             // txtHLY
             // 
@@ -162,6 +162,7 @@
             this.Controls.Add(this.IDLY);
             this.Name = "TambahLayananForm";
             this.Text = "TambahLayananForm";
+            this.Load += new System.EventHandler(this.TambahLayananForm_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dgvLayanan)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
