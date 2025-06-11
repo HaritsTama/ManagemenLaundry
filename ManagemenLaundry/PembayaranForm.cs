@@ -23,7 +23,7 @@ namespace ManagemenLaundry
         {
             AbsoluteExpiration = DateTimeOffset.Now.AddMinutes(5) // cache expires after 5 minutes
         };
-        private const string PesananCacheKey = "PesananData";
+        private const string PembayaranCacheKey = "PembayaranData";
 
 
 
@@ -45,14 +45,14 @@ namespace ManagemenLaundry
             {
                 conn.Open();
 
-                DataTable PesananData = _cache.Get(PesananCacheKey) as DataTable;
+                DataTable PesananData = _cache.Get(PembayaranCacheKey) as DataTable;
                 if (PesananData == null)
                 {
                     PesananData = new DataTable();
                     {
                         new SqlDataAdapter("SELECT ID_Pesanan FROM Pesanan", conn).Fill(PesananData);
                     }
-                    _cache.Set(PesananCacheKey, PesananData, _policy);
+                    _cache.Set(PembayaranCacheKey, PesananData, _policy);
                 }
 
                 cmbPsn.DataSource = PesananData;
