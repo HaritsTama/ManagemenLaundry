@@ -15,7 +15,9 @@ namespace ManagemenLaundry
 {
     public partial class PembayaranForm: Form
     {
-        private string connectionString = "Data Source= LAPTOP-RFI0KF85\\HARITSZHAFRAN ;Initial Catalog=SistemManajemenLaundry;Integrated Security=True";
+        Koneksi koneksi = new Koneksi();
+
+        private string connectionString = "";
         private int selectedPesananId = -1;
 
         private readonly MemoryCache _cache = MemoryCache.Default;
@@ -23,13 +25,14 @@ namespace ManagemenLaundry
         {
             AbsoluteExpiration = DateTimeOffset.Now.AddMinutes(5) // cache expires after 5 minutes
         };
-        private const string PembayaranCacheKey = "PembayaranData";
+        private const string PesananComboKey = "PesananComboData";
 
 
 
         public PembayaranForm()
         {
             InitializeComponent();
+            connectionString = koneksi.connectionString();
         }
 
         private void PembayaranForm_Load(object sender, EventArgs e)
@@ -41,18 +44,18 @@ namespace ManagemenLaundry
 
         private void LoadComboBoxPesanan()
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = new SqlConnection(koneksi.connectionString()))
             {
                 conn.Open();
 
-                DataTable PesananData = _cache.Get(PembayaranCacheKey) as DataTable;
+                DataTable PesananData = _cache.Get(PesananComboKey) as DataTable;
                 if (PesananData == null)
                 {
                     PesananData = new DataTable();
                     {
-                        new SqlDataAdapter("SELECT ID_Pesanan FROM Pesanan", conn).Fill(PesananData);
+                        new SqlDataAdapter("SELECT ID_Pesanan FROM Pesanan ORDER BY ID_Pesanan", conn).Fill(PesananData);
                     }
-                    _cache.Set(PembayaranCacheKey, PesananData, _policy);
+                    _cache.Set(PesananComboKey, PesananData, _policy);
                 }
 
                 cmbPsn.DataSource = PesananData;
@@ -72,7 +75,7 @@ namespace ManagemenLaundry
 
         private void LoadData()
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = new SqlConnection(koneksi.connectionString()))
             {
                 string query = @"
                     SELECT 
@@ -96,7 +99,7 @@ namespace ManagemenLaundry
 
         private decimal HitungTotalHarga(int idPesanan)
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = new SqlConnection(koneksi.connectionString()))
             {
                 conn.Open();
                 string query = @"
@@ -129,7 +132,7 @@ namespace ManagemenLaundry
 
         private DateTime HitungBatasLunas(int idPesanan)
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = new SqlConnection(koneksi.connectionString()))
             {
                 conn.Open();
                 string query = @"
@@ -163,7 +166,7 @@ namespace ManagemenLaundry
             decimal totalHarga = HitungTotalHarga(idPesanan);
             DateTime batasLunas = HitungBatasLunas(idPesanan);
 
-            using (var conn = new SqlConnection(connectionString))
+            using (var conn = new SqlConnection(koneksi.connectionString()))
             {
                 conn.Open();
                 using (var tx = conn.BeginTransaction())
@@ -211,7 +214,7 @@ namespace ManagemenLaundry
             if (confirm != DialogResult.Yes) return;
 
             int idPesanan = (int)dgvPembayaran.SelectedRows[0].Cells["ID_Pesanan"].Value;
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = new SqlConnection(koneksi.connectionString()))
             {
                 conn.Open();
                 using (var tx = conn.BeginTransaction())
@@ -251,7 +254,7 @@ namespace ManagemenLaundry
             decimal totalHarga = HitungTotalHarga(idPesanan);
             DateTime batasLunas = HitungBatasLunas(idPesanan);
 
-            using (var conn = new SqlConnection(connectionString))
+            using (var conn = new SqlConnection(koneksi.connectionString()))
             {
                 conn.Open();
                 using (var tx = conn.BeginTransaction())
@@ -307,7 +310,7 @@ namespace ManagemenLaundry
 
         private void EnsureIndexes()
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = new SqlConnection(koneksi.connectionString()))
             {
                 conn.Open();
                 string indexScript = @"
@@ -324,7 +327,7 @@ namespace ManagemenLaundry
 
         private void AnalyzeQuery(string sqlQuery)
         {
-            using (var conn = new SqlConnection(connectionString))
+            using (var conn = new SqlConnection(koneksi.connectionString()))
             {
                 conn.InfoMessage += (s, e) => MessageBox.Show(e.Message, "STATISTICS INFO", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 conn.Open();

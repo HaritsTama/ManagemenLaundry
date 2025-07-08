@@ -14,7 +14,9 @@ namespace ManagemenLaundry
 {
     public partial class TambahLayananForm : Form
     {
-        private string connectionString = "Data Source= LAPTOP-RFI0KF85\\HARITSZHAFRAN ;Initial Catalog=SistemManajemenLaundry;Integrated Security=True";
+        Koneksi koneksi = new Koneksi();
+
+       private string connectionString = "";
 
         private readonly MemoryCache _cache = MemoryCache.Default;
         private readonly string _cacheKey = "LayananData";
@@ -26,6 +28,7 @@ namespace ManagemenLaundry
         public TambahLayananForm()
         {
             InitializeComponent();
+            connectionString = koneksi.connectionString();
         }
 
         private void TambahLayananForm_Load(object sender, EventArgs e)
@@ -66,7 +69,7 @@ namespace ManagemenLaundry
                     return;
                 }
 
-                using (SqlConnection con = new SqlConnection(connectionString))
+                using (SqlConnection con = new SqlConnection(koneksi.connectionString()))
                 {
                     using (SqlCommand cmd = new SqlCommand("usp_Layanan_GetAll", con))
                     {
@@ -128,7 +131,7 @@ namespace ManagemenLaundry
 
             try
             {
-                using (SqlConnection con = new SqlConnection(connectionString))
+                using (SqlConnection con = new SqlConnection(koneksi.connectionString()))
                 {
                     con.Open();
                     SqlTransaction transaction = con.BeginTransaction();
@@ -181,7 +184,7 @@ namespace ManagemenLaundry
                 var confirm = MessageBox.Show("Apakah Anda yakin ingin menghapus data ini?", "Konfirmasi Hapus", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
                 if (confirm != DialogResult.Yes) return;
 
-                using (SqlConnection con = new SqlConnection(connectionString))
+                using (SqlConnection con = new SqlConnection(koneksi.connectionString()))
                 {
                     con.Open();
                     SqlTransaction transaction = con.BeginTransaction();
@@ -230,7 +233,7 @@ namespace ManagemenLaundry
                 var confirm = MessageBox.Show("Apakah Anda yakin ingin mengupdate data ini?", "Konfirmasi", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
                 if (confirm != DialogResult.Yes) return;
 
-                using (SqlConnection con = new SqlConnection(connectionString))
+                using (SqlConnection con = new SqlConnection(koneksi.connectionString()))
                 {
                     con.Open();
                     SqlTransaction transaction = con.BeginTransaction();

@@ -15,7 +15,9 @@ namespace ManagemenLaundry
 {
     public partial class MasukanPesananForm : Form
     {
-        private string connectionString = "Data Source= LAPTOP-RFI0KF85\\HARITSZHAFRAN ;Initial Catalog=SistemManajemenLaundry;Integrated Security=True";
+        Koneksi koneksi = new Koneksi();
+
+        private string connectionString = "";
 
         private Dictionary<int, int> barangQuantities = new Dictionary<int, int>();
 
@@ -31,6 +33,7 @@ namespace ManagemenLaundry
         public MasukanPesananForm()
         {
             InitializeComponent();
+            connectionString = koneksi.connectionString();
         }
 
         private void MasukanPesananForm_Load(object sender, EventArgs e)
@@ -43,7 +46,7 @@ namespace ManagemenLaundry
 
         private void LoadComboBoxData()
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = new SqlConnection(koneksi.connectionString()))
             {
                 conn.Open();
 
@@ -107,7 +110,7 @@ namespace ManagemenLaundry
         }
         private void LoadData()
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = new SqlConnection(koneksi.connectionString()))
             {
                 var query = @"
                     SELECT p.ID_Pesanan,
@@ -158,7 +161,7 @@ namespace ManagemenLaundry
                 barangTable.Rows.Add(id, qty);
             }
 
-            using (var conn = new SqlConnection(connectionString))
+            using (var conn = new SqlConnection(koneksi.connectionString()))
             {
                 conn.Open();
                 using (var tx = conn.BeginTransaction())
@@ -206,7 +209,7 @@ namespace ManagemenLaundry
             if (result == DialogResult.No) return;
 
             int id = (int)dgvPesanan.SelectedRows[0].Cells["ID_Pesanan"].Value;
-            using (var conn = new SqlConnection(connectionString))
+            using (var conn = new SqlConnection(koneksi.connectionString()))
             {
                 conn.Open();
                 using (var tx = conn.BeginTransaction())
@@ -259,7 +262,7 @@ namespace ManagemenLaundry
                 barangTable.Rows.Add(bid, qty);
             }
 
-            using (var conn = new SqlConnection(connectionString))
+            using (var conn = new SqlConnection(koneksi.connectionString()))
             {
                 conn.Open();
                 using (var tx = conn.BeginTransaction())
@@ -320,7 +323,7 @@ namespace ManagemenLaundry
             foreach (DataRowView dr in itemsCopy)
             {
                 bool cek = false;
-                using (SqlConnection conn = new SqlConnection(connectionString))
+                using (SqlConnection conn = new SqlConnection(koneksi.connectionString()))
                 {
                     conn.Open();
                     var cmd = new SqlCommand("SELECT COUNT(*) FROM PesananBarang WHERE ID_Pesanan=@idp AND ID_Barang=@idb", conn);
@@ -367,7 +370,7 @@ namespace ManagemenLaundry
 
         private void AnalyzeQuery(string sqlQuery)
         {
-            using (var conn = new SqlConnection(connectionString))
+            using (var conn = new SqlConnection(koneksi.connectionString()))
             {
                 conn.InfoMessage += (s, e) => MessageBox.Show(e.Message, "STATISTICS INFO", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 conn.Open();
@@ -405,7 +408,7 @@ namespace ManagemenLaundry
         
         private void EnsureIndexes()
         {
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = new SqlConnection(koneksi.connectionString()))
             {
                 conn.Open();
                 string indexScript = @"

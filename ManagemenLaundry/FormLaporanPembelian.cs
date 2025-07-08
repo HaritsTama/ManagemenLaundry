@@ -14,9 +14,14 @@ namespace ManagemenLaundry
 {
     public partial class FormLaporanPembelian : Form
     {
+        Koneksi koneksi = new Koneksi();
+
+        string connectionString = "";
+
         public FormLaporanPembelian()
         {
             InitializeComponent();
+            connectionString = koneksi.connectionString();
         }
 
         private void FormLaporanPembelian_Load(object sender, EventArgs e)
@@ -29,7 +34,7 @@ namespace ManagemenLaundry
         private void SetupReportViewer()
         {
             // connection string to your database
-            string connectionString = "Data Source= LAPTOP-RFI0KF85\\HARITSZHAFRAN ;Initial Catalog=SistemManajemenLaundry;Integrated Security=True";
+
 
             // SQL query to retrieve the required data from the database
             string query = @"
@@ -64,7 +69,7 @@ namespace ManagemenLaundry
             DataTable dt = new DataTable();
 
             // use SqlDataAdapter to fill the DataTable with data from the database
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            using (SqlConnection conn = new SqlConnection(koneksi.connectionString()))
             {
                 SqlDataAdapter da = new SqlDataAdapter(query, conn);
                 da.Fill(dt);

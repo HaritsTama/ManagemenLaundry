@@ -7,6 +7,7 @@ using System.Drawing;
 using System.Linq;
 using System.Runtime.Caching;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -14,7 +15,9 @@ namespace ManagemenLaundry
 {
     public partial class TambahPelangganForm: Form
     {
-        private string connectionString = "Data Source= LAPTOP-RFI0KF85\\HARITSZHAFRAN ;Initial Catalog=SistemManajemenLaundry;Integrated Security=True";
+        Koneksi koneksi = new Koneksi();
+
+        private string connectionString = "";
         private int selectedID = -1;
 
         private readonly MemoryCache _cache = MemoryCache.Default;
@@ -27,6 +30,7 @@ namespace ManagemenLaundry
         public TambahPelangganForm()
         {
             InitializeComponent();
+            connectionString = koneksi.connectionString();
         }
 
         private void TambahPelangganForm_Load(object sender, EventArgs e)
@@ -73,6 +77,16 @@ namespace ManagemenLaundry
                 return;
             }
 
+            Regex emailRegex = new Regex(
+                @"^(?!.*\.\.)(?!.*\.$)[^\W][\w!#$%&'*+/=?^_`{|}~.-]{0,63}@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"
+            );
+
+            if (!emailRegex.IsMatch(email))
+            {
+                MessageBox.Show("Format email tidak valid.", "Validasi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             // Validasi tanggal masuk
             if (!System.Text.RegularExpressions.Regex.IsMatch(txtNPG.Text, @"^[a-zA-Z\s]+$"))
             {
@@ -98,7 +112,7 @@ namespace ManagemenLaundry
 
             try
             {
-                using (SqlConnection con = new SqlConnection(connectionString))
+                using (SqlConnection con = new SqlConnection(koneksi.connectionString()))
                 {
                     con.Open();
                     SqlTransaction transaction = con.BeginTransaction();
@@ -151,7 +165,7 @@ namespace ManagemenLaundry
                 var confirm = MessageBox.Show("Apakah Anda yakin ingin menghapus data ini?", "Konfirmasi Hapus", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
                 if (confirm != DialogResult.Yes) return;
 
-                using (SqlConnection con = new SqlConnection(connectionString))
+                using (SqlConnection con = new SqlConnection(koneksi.connectionString()))
                 {
                     con.Open();
                     SqlTransaction transaction = con.BeginTransaction();
@@ -204,10 +218,20 @@ namespace ManagemenLaundry
                 string email = txtEPG.Text;
                 string telepon = txtTPG.Text;
 
+                Regex emailRegex = new Regex(
+                @"^(?!.*\.\.)(?!.*\.$)[^\W][\w!#$%&'*+/=?^_`{|}~.-]{0,63}@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"
+                );
+
+                if (!emailRegex.IsMatch(email))
+                {
+                    MessageBox.Show("Format email tidak valid.", "Validasi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
                 var confirm = MessageBox.Show("Apakah Anda yakin ingin mengupdate data ini?", "Konfirmasi", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
                 if (confirm != DialogResult.Yes) return;
 
-                using (SqlConnection con = new SqlConnection(connectionString))
+                using (SqlConnection con = new SqlConnection(koneksi.connectionString()))
                 {
                     con.Open();
                     SqlTransaction transaction = con.BeginTransaction();
@@ -290,7 +314,7 @@ namespace ManagemenLaundry
                     return;
                 }
 
-                using (SqlConnection con = new SqlConnection(connectionString))
+                using (SqlConnection con = new SqlConnection(koneksi.connectionString()))
                 {
                     using (SqlCommand cmd = new SqlCommand("usp_Pelanggan_GetAll", con))
                     {

@@ -14,7 +14,9 @@ namespace ManagemenLaundry
 {
     public partial class TambahBarangForm: Form
     {
-        private string connectionString = "Data Source= LAPTOP-RFI0KF85\\HARITSZHAFRAN ;Initial Catalog=SistemManajemenLaundry;Integrated Security=True";
+        Koneksi koneksi = new Koneksi();
+
+        private string connectionString = "";
 
         private static readonly MemoryCache _cache = MemoryCache.Default;
         private const string CacheKeyBarang = "DataBarang"; // Kunci unik untuk cache barang
@@ -22,6 +24,7 @@ namespace ManagemenLaundry
         public TambahBarangForm()
         {
             InitializeComponent();
+            connectionString = koneksi.connectionString();
         }
 
         private void TambahBarangForm_Load(object sender, EventArgs e)
@@ -54,7 +57,7 @@ namespace ManagemenLaundry
 
             try
             {
-                using (SqlConnection con = new SqlConnection(connectionString))
+                using (SqlConnection con = new SqlConnection(koneksi.connectionString()))
                 {
                     SqlCommand cmd = new SqlCommand("sp_SelectAllBarang", con);
                     cmd.CommandType = CommandType.StoredProcedure;
@@ -97,7 +100,7 @@ namespace ManagemenLaundry
 
             try
             {
-                using (SqlConnection con = new SqlConnection(connectionString))
+                using (SqlConnection con = new SqlConnection(koneksi.connectionString()))
                 {
                     con.Open();
                     SqlTransaction transaction = con.BeginTransaction();
@@ -149,7 +152,7 @@ namespace ManagemenLaundry
             {
                 try
                 {
-                    using (SqlConnection con = new SqlConnection(connectionString))
+                    using (SqlConnection con = new SqlConnection(koneksi.connectionString()))
                     {
                         con.Open();
                         // BARIS KRITIS 1: Memulai transaksi
@@ -208,7 +211,8 @@ namespace ManagemenLaundry
 
             try
             {
-                using (SqlConnection con = new SqlConnection(connectionString))
+                using (SqlConnection con = new SqlConnection(koneksi.connectionString()
+                    ))
                 {
                     con.Open();
                     using (SqlCommand cmd = new SqlCommand("sp_UpdateBarang", con))
