@@ -133,6 +133,7 @@
             this.btnTestKoneksi.TabIndex = 9;
             this.btnTestKoneksi.Text = "Tes Koneksi";
             this.btnTestKoneksi.UseVisualStyleBackColor = true;
+            this.btnTestKoneksi.Click += new System.EventHandler(this.btnTestKoneksi_Click);
             // 
             // btnAnalisis
             // 
@@ -143,6 +144,7 @@
             this.btnAnalisis.TabIndex = 10;
             this.btnAnalisis.Text = "Analisis";
             this.btnAnalisis.UseVisualStyleBackColor = true;
+            this.btnAnalisis.Click += new System.EventHandler(this.btnAnalisis_Click);
             // 
             // Form1
             // 
