@@ -35,6 +35,9 @@
             this.btnTambah = new System.Windows.Forms.Button();
             this.btnBarang = new System.Windows.Forms.Button();
             this.button1 = new System.Windows.Forms.Button();
+            this.lblStatusKoneksi = new System.Windows.Forms.Label();
+            this.btnTestKoneksi = new System.Windows.Forms.Button();
+            this.btnAnalisis = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // MenuUtama
@@ -50,7 +53,7 @@
             // BtnPelangBaru
             // 
             this.BtnPelangBaru.Font = new System.Drawing.Font("Garamond", 10.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.BtnPelangBaru.Location = new System.Drawing.Point(227, 46);
+            this.BtnPelangBaru.Location = new System.Drawing.Point(27, 73);
             this.BtnPelangBaru.Name = "BtnPelangBaru";
             this.BtnPelangBaru.Size = new System.Drawing.Size(317, 48);
             this.BtnPelangBaru.TabIndex = 1;
@@ -61,7 +64,7 @@
             // BtnBuatPesan
             // 
             this.BtnBuatPesan.Font = new System.Drawing.Font("Garamond", 10.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.BtnBuatPesan.Location = new System.Drawing.Point(227, 245);
+            this.BtnBuatPesan.Location = new System.Drawing.Point(453, 163);
             this.BtnBuatPesan.Name = "BtnBuatPesan";
             this.BtnBuatPesan.Size = new System.Drawing.Size(317, 48);
             this.BtnBuatPesan.TabIndex = 2;
@@ -72,7 +75,7 @@
             // BtnPembayaran
             // 
             this.BtnPembayaran.Font = new System.Drawing.Font("Garamond", 10.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.BtnPembayaran.Location = new System.Drawing.Point(227, 313);
+            this.BtnPembayaran.Location = new System.Drawing.Point(27, 258);
             this.BtnPembayaran.Name = "BtnPembayaran";
             this.BtnPembayaran.Size = new System.Drawing.Size(317, 48);
             this.BtnPembayaran.TabIndex = 3;
@@ -83,7 +86,7 @@
             // btnTambah
             // 
             this.btnTambah.Font = new System.Drawing.Font("Garamond", 10.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnTambah.Location = new System.Drawing.Point(227, 111);
+            this.btnTambah.Location = new System.Drawing.Point(453, 73);
             this.btnTambah.Name = "btnTambah";
             this.btnTambah.Size = new System.Drawing.Size(317, 48);
             this.btnTambah.TabIndex = 4;
@@ -94,7 +97,7 @@
             // btnBarang
             // 
             this.btnBarang.Font = new System.Drawing.Font("Garamond", 10.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnBarang.Location = new System.Drawing.Point(227, 177);
+            this.btnBarang.Location = new System.Drawing.Point(27, 163);
             this.btnBarang.Name = "btnBarang";
             this.btnBarang.Size = new System.Drawing.Size(317, 48);
             this.btnBarang.TabIndex = 5;
@@ -105,7 +108,7 @@
             // button1
             // 
             this.button1.Font = new System.Drawing.Font("Garamond", 10.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.button1.Location = new System.Drawing.Point(227, 379);
+            this.button1.Location = new System.Drawing.Point(453, 258);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(317, 48);
             this.button1.TabIndex = 6;
@@ -113,11 +116,42 @@
             this.button1.UseVisualStyleBackColor = true;
             this.button1.Click += new System.EventHandler(this.button1_Click);
             // 
+            // lblStatusKoneksi
+            // 
+            this.lblStatusKoneksi.AutoSize = true;
+            this.lblStatusKoneksi.Location = new System.Drawing.Point(362, 425);
+            this.lblStatusKoneksi.Name = "lblStatusKoneksi";
+            this.lblStatusKoneksi.Size = new System.Drawing.Size(0, 16);
+            this.lblStatusKoneksi.TabIndex = 8;
+            // 
+            // btnTestKoneksi
+            // 
+            this.btnTestKoneksi.Font = new System.Drawing.Font("Garamond", 10.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnTestKoneksi.Location = new System.Drawing.Point(27, 355);
+            this.btnTestKoneksi.Name = "btnTestKoneksi";
+            this.btnTestKoneksi.Size = new System.Drawing.Size(317, 48);
+            this.btnTestKoneksi.TabIndex = 9;
+            this.btnTestKoneksi.Text = "Tes Koneksi";
+            this.btnTestKoneksi.UseVisualStyleBackColor = true;
+            // 
+            // btnAnalisis
+            // 
+            this.btnAnalisis.Font = new System.Drawing.Font("Garamond", 10.8F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnAnalisis.Location = new System.Drawing.Point(453, 355);
+            this.btnAnalisis.Name = "btnAnalisis";
+            this.btnAnalisis.Size = new System.Drawing.Size(317, 48);
+            this.btnAnalisis.TabIndex = 10;
+            this.btnAnalisis.Text = "Analisis";
+            this.btnAnalisis.UseVisualStyleBackColor = true;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.btnAnalisis);
+            this.Controls.Add(this.btnTestKoneksi);
+            this.Controls.Add(this.lblStatusKoneksi);
             this.Controls.Add(this.button1);
             this.Controls.Add(this.btnBarang);
             this.Controls.Add(this.btnTambah);
@@ -127,6 +161,7 @@
             this.Controls.Add(this.MenuUtama);
             this.Name = "Form1";
             this.Text = "Form1";
+            this.Load += new System.EventHandler(this.Form1_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -141,6 +176,9 @@
         private System.Windows.Forms.Button btnTambah;
         private System.Windows.Forms.Button btnBarang;
         private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Label lblStatusKoneksi;
+        private System.Windows.Forms.Button btnTestKoneksi;
+        private System.Windows.Forms.Button btnAnalisis;
     }
 }
 

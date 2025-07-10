@@ -98,7 +98,6 @@ namespace ManagemenLaundry
             string waktuPengerjaan = txtPLY.Text;
             string Harga = txtHLY.Text;
 
-            // Validasi input
             if (string.IsNullOrWhiteSpace(nama) || string.IsNullOrWhiteSpace(waktuPengerjaan) ||
                 string.IsNullOrWhiteSpace(Harga))
             {
@@ -106,10 +105,9 @@ namespace ManagemenLaundry
                 return;
             }
 
-            // Validasi tanggal masuk
             if (!System.Text.RegularExpressions.Regex.IsMatch(txtNLY.Text, @"^[a-zA-Z\s]+$"))
             {
-                MessageBox.Show("Nama pelanggan tidak boleh mengandung karakter spesial atau angka.", "Validasi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Nama Layanan tidak boleh mengandung karakter spesial atau angka.", "Validasi", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
             ;

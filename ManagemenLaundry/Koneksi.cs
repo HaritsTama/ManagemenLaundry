@@ -5,6 +5,7 @@ using System.Net.Sockets;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using System.Data.SqlClient;
 
 namespace ManagemenLaundry
 {
@@ -39,6 +40,45 @@ namespace ManagemenLaundry
                 }
             }
             throw new Exception("Tidak ada alamat IP yang ditemukan.");
+        }
+
+        public static SqlConnection GetConnection()
+        {
+            Koneksi koneksi = new Koneksi();
+            string connStr = koneksi.connectionString();
+            return new SqlConnection(connStr);
+        }
+
+        public static bool TestConnection()
+        {
+            try
+            {
+                using (SqlConnection conn = GetConnection())
+                {
+                    conn.Open();
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+
+        public static string TestConnectionWithMessage()
+        {
+            try
+            {
+                using (SqlConnection conn = GetConnection())
+                {
+                    conn.Open();
+                    return "Status: Tersambung";
+                }
+            }
+            catch (Exception ex)
+            {
+                return $"Status: Gagal - {ex.Message}";
+            }
         }
     }
 }
